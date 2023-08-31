@@ -1,0 +1,32 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://www.jitpack.io" }
+        gradlePluginPortal()
+    }
+}
+
+// VERSION_CATALOGS当前并不是稳定版本功能
+// 所以需要预先开启功能预览 enableFeaturePreview('FEATURE')
+enableFeaturePreview("VERSION_CATALOGS")
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://www.jitpack.io" }
+    }
+    versionCatalogs {
+        libs {
+            from(files("./libs.versions.toml"))
+        }
+    }
+}
+rootProject.name = "MediaBrowser"
+include ':app'
+include ':base:util'
+include ':base:support'
+include ':base:widget'
+
