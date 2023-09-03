@@ -7,6 +7,7 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.imageLoader
 import coil.memory.MemoryCache
+import com.pateo.module.usb.UsbApplication
 import com.senierr.base.util.LogUtil
 
 /**
@@ -26,6 +27,8 @@ class SessionApplication : Application(), ImageLoaderFactory {
         super.onCreate()
         Log.i(TAG, "onCreate")
         LogUtil.isDebug = isDebug
+
+        UsbApplication.onCreate(this)
     }
 
     override fun onTrimMemory(level: Int) {

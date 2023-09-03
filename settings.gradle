@@ -24,8 +24,11 @@ dependencyResolutionManagement {
         }
     }
 }
+
 rootProject.name = "MediaBrowser"
 include ':app'
+include ':ui'
+include ':repository'
 include ':base:util'
 include ':base:support'
 include ':base:widget'

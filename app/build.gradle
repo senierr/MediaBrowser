@@ -40,6 +40,7 @@ dependencies {
     implementation project(path: ':base:util')
     implementation project(path: ':base:support')
     implementation project(path: ':base:widget')
+    implementation project(path: ':ui')
     implementation libs.androidx.appcompat
     implementation libs.material
     implementation libs.kotlin.stdlib

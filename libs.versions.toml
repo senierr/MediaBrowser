@@ -1,5 +1,5 @@
 [versions]
-minSdk = "26"
+minSdk = "28"
 compilesdk = "33"
 targetsdk = "33"
 jvmTarget = "1.8"

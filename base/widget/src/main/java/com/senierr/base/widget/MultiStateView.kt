@@ -1,4 +1,4 @@
-package com.senierr.xmly.base.widget
+package com.senierr.base.widget
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -13,7 +13,6 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.IntDef
 import androidx.annotation.LayoutRes
-import com.senierr.base.widget.R
 
 class MultiStateView @JvmOverloads constructor(
     context: Context,

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:paddingStart="@dimen/dp_54"
+    android:paddingEnd="@dimen/dp_0"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <View
+        android:background="#26FFFFFF"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_1"/>
+
+    <TextView
+        android:id="@+id/tv_display_name"
+        android:textSize="@dimen/sp_36"
+        android:textColor="@color/text_white"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_toStartOf="@id/fl_cover"
+        android:layout_marginTop="@dimen/dp_32"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/tv_duration"
+        android:textSize="@dimen/sp_30"
+        android:textColor="@color/text_white"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_toStartOf="@id/fl_cover"
+        android:layout_below="@id/tv_display_name"
+        android:layout_marginTop="@dimen/dp_16"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <FrameLayout
+        android:id="@+id/fl_cover"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_width="@dimen/dp_216"
+        android:layout_height="@dimen/dp_162">
+
+        <ImageView
+            android:id="@+id/iv_cover"
+            android:scaleType="centerCrop"
+            android:layout_gravity="center"
+            android:layout_width="@dimen/dp_192"
+            android:layout_height="@dimen/dp_108"/>
+
+        <ImageView
+            android:src="@drawable/ic_play_circle"
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </FrameLayout>
+</RelativeLayout>
