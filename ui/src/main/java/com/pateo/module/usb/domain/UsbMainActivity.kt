@@ -21,8 +21,8 @@ import com.pateo.module.usb.ktx.showEmptyView
 import com.pateo.module.usb.ktx.showLoadingView
 import com.pateo.module.usb.ktx.showUnmountView
 import com.pateo.module.usb.utils.DiffUtils
-import com.qinggan.usbvideo.repository.entity.UsbFile
-import com.qinggan.usbvideo.repository.entity.UsbStatus
+import com.senierr.media.repository.entity.UsbFile
+import com.senierr.media.repository.entity.UsbStatus
 import com.senierr.adapter.internal.MultiTypeAdapter
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.support.ui.recyclerview.GridItemDecoration

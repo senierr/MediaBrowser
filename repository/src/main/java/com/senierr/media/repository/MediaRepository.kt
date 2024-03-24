@@ -1,16 +1,16 @@
-package com.qinggan.usbvideo.repository
+package com.senierr.media.repository
 
 import android.app.Application
-import com.qinggan.usbvideo.repository.store.db.DatabaseManager
-import com.qinggan.usbvideo.repository.service.api.IUsbService
-import com.qinggan.usbvideo.repository.service.impl.UsbService
+import com.senierr.media.local.repository.service.api.IMediaService
+import com.senierr.media.local.repository.store.db.DatabaseManager
+import com.senierr.media.repository.service.impl.MediaService
 
 /**
  * U盘视频数据入口
  *
  * @author chunjiezhou
  */
-object UsbRepository {
+object MediaRepository {
 
     private lateinit var application: Application
 
@@ -22,12 +22,7 @@ object UsbRepository {
      * @param ignoreImage 是否忽略图片
      * @param ignoreVideo 是否忽略视频
      */
-    fun initialize(
-        application: Application,
-        ignoreAudio: Boolean = false,
-        ignoreImage: Boolean = false,
-        ignoreVideo: Boolean = false
-    ) {
+    fun initialize(application: Application) {
         this.application = application
         DatabaseManager.initialize(application)
     }
@@ -41,7 +36,7 @@ object UsbRepository {
      * 获取数据服务
      */
     inline fun <reified T> getService(): T = when (T::class.java) {
-        IUsbService::class.java -> UsbService(getApplication()) as T
+        IMediaService::class.java -> MediaService(getApplication()) as T
         else -> throw IllegalArgumentException("Can not find ${T::class.java.simpleName}!")
     }
 }

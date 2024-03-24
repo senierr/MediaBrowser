@@ -1,4 +1,4 @@
-package com.qinggan.usbvideo.repository.utils;
+package com.senierr.media.repository.utils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

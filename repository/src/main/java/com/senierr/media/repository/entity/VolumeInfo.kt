@@ -1,4 +1,4 @@
-package com.qinggan.usbvideo.repository.entity
+package com.senierr.media.repository.entity
 
 /**
  * 挂载盘信息
@@ -8,7 +8,7 @@ package com.qinggan.usbvideo.repository.entity
  */
 data class VolumeInfo(
     val uuid: String?,
-    val path: String,
+    val path: String?,
     val description: String?,
     val mState: String,
     val isRemovable: Boolean

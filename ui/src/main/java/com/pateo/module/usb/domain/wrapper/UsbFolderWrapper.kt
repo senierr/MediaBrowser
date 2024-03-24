@@ -2,7 +2,7 @@ package com.pateo.module.usb.domain.wrapper
 
 import com.pateo.module.usb.R
 import com.pateo.module.usb.databinding.ItemUsbFolderBinding
-import com.qinggan.usbvideo.repository.entity.UsbFolder
+import com.senierr.media.repository.entity.UsbFolder
 import com.senierr.adapter.internal.ViewHolder
 import com.senierr.adapter.internal.ViewHolderWrapper
 

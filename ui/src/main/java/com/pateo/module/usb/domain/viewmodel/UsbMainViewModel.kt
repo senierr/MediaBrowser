@@ -15,11 +15,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pateo.module.usb.UsbApplication
 import com.pateo.module.usb.utils.SortUtil.sort
-import com.qinggan.usbvideo.repository.UsbRepository
-import com.qinggan.usbvideo.repository.entity.UsbFile
-import com.qinggan.usbvideo.repository.entity.UsbStatus
-import com.qinggan.usbvideo.repository.entity.VolumeInfo
-import com.qinggan.usbvideo.repository.service.api.IUsbService
+import com.senierr.media.repository.MediaRepository
+import com.senierr.media.repository.entity.UsbFile
+import com.senierr.media.repository.entity.UsbStatus
+import com.senierr.media.repository.entity.VolumeInfo
 import com.senierr.base.support.ktx.showToast
 import com.senierr.base.util.LogUtil
 import kotlinx.coroutines.Job
@@ -50,7 +49,7 @@ class UsbMainViewModel : ViewModel() {
     private val _usbFiles = MutableSharedFlow<List<UsbFile>>(1)
     val usbFiles = _usbFiles.asSharedFlow()
 
-    private val usbService: IUsbService = UsbRepository.getService()
+    private val usbService: IUsbService = MediaRepository.getService()
 
     // 当前挂载盘
     private var currentVolumeInfo: VolumeInfo? = null

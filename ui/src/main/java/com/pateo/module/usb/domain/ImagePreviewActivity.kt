@@ -13,9 +13,9 @@ import com.pateo.module.usb.domain.viewmodel.UsbMainViewModel
 import com.pateo.module.usb.domain.wrapper.UsbImagePreviewWrapper
 import com.pateo.module.usb.ktx.applicationViewModel
 import com.pateo.module.usb.utils.DiffUtils
-import com.qinggan.usbvideo.repository.entity.UsbFile
-import com.qinggan.usbvideo.repository.entity.UsbImage
-import com.qinggan.usbvideo.repository.entity.UsbStatus
+import com.senierr.media.repository.entity.UsbFile
+import com.senierr.media.repository.entity.UsbImage
+import com.senierr.media.repository.entity.UsbStatus
 import com.senierr.adapter.internal.MultiTypeAdapter
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil

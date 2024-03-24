@@ -1,7 +1,7 @@
 package com.pateo.module.usb.utils
 
 import androidx.recyclerview.widget.DiffUtil
-import com.qinggan.usbvideo.repository.entity.UsbFile
+import com.senierr.media.repository.entity.UsbFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

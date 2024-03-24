@@ -3,7 +3,7 @@ package com.pateo.module.usb.domain.wrapper
 import coil.load
 import com.pateo.module.usb.R
 import com.pateo.module.usb.databinding.ItemUsbAudioBinding
-import com.qinggan.usbvideo.repository.entity.UsbAudio
+import com.senierr.media.repository.entity.UsbAudio
 import com.senierr.adapter.internal.ViewHolder
 import com.senierr.adapter.internal.ViewHolderWrapper
 

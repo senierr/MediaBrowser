@@ -20,9 +20,9 @@ import com.pateo.module.usb.ktx.applicationViewModel
 import com.pateo.module.usb.utils.DiffUtils
 import com.pateo.module.usb.utils.OnMediaControlListener
 import com.pateo.module.usb.utils.Utils
-import com.qinggan.usbvideo.repository.entity.UsbFile
-import com.qinggan.usbvideo.repository.entity.UsbStatus
-import com.qinggan.usbvideo.repository.entity.UsbVideo
+import com.senierr.media.repository.entity.UsbFile
+import com.senierr.media.repository.entity.UsbStatus
+import com.senierr.media.repository.entity.UsbVideo
 import com.senierr.adapter.internal.MultiTypeAdapter
 import com.senierr.base.support.ktx.onClick
 import com.senierr.base.support.ktx.showToast

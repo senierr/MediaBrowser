@@ -4,7 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
-import com.qinggan.usbvideo.repository.UsbRepository
+import com.senierr.media.repository.MediaRepository
 import com.senierr.base.util.LogUtil
 
 /**
@@ -26,7 +26,7 @@ object UsbApplication : ViewModelStoreOwner {
 
         LogUtil.isDebug = true
 
-        UsbRepository.initialize(application)
+        MediaRepository.initialize(application)
     }
 
     override val viewModelStore: ViewModelStore

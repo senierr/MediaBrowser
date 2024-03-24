@@ -4,7 +4,7 @@ import android.view.ViewGroup
 import coil.load
 import com.pateo.module.usb.R
 import com.pateo.module.usb.databinding.ItemUsbImagePreviewBinding
-import com.qinggan.usbvideo.repository.entity.UsbImage
+import com.senierr.media.repository.entity.UsbImage
 import com.senierr.adapter.internal.ViewHolder
 import com.senierr.adapter.internal.ViewHolderWrapper
 

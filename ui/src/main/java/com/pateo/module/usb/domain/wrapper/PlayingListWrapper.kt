@@ -4,7 +4,7 @@ import coil.load
 import com.pateo.module.usb.R
 import com.pateo.module.usb.databinding.ItemUsbPlayingListBinding
 import com.pateo.module.usb.utils.Utils
-import com.qinggan.usbvideo.repository.entity.UsbVideo
+import com.senierr.media.repository.entity.UsbVideo
 import com.senierr.adapter.internal.ViewHolder
 import com.senierr.adapter.internal.ViewHolderWrapper
 import com.senierr.base.util.LogUtil
