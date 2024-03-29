@@ -7,9 +7,6 @@ package com.senierr.media.repository.entity
  * @date 2023/07/30
  */
 data class VolumeInfo(
-    val uuid: String?,
     val path: String?,
-    val description: String?,
-    val mState: String,
-    val isRemovable: Boolean
+    val state: String
 )

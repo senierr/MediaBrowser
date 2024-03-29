@@ -1,4 +1,4 @@
-package com.senierr.media.local.repository.store.db
+package com.senierr.media.repository.store.db
 
 import android.content.Context
 import androidx.room.Room

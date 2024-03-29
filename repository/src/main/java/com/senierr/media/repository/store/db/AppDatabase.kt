@@ -1,9 +1,9 @@
-package com.senierr.media.local.repository.store.db
+package com.senierr.media.repository.store.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.senierr.media.local.repository.entity.PlaySession
-import com.senierr.media.local.repository.store.db.dao.PlaySessionDao
+import com.senierr.media.repository.entity.PlaySession
+import com.senierr.media.repository.store.db.dao.PlaySessionDao
 
 /**
  * 数据库入口

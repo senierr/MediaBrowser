@@ -1,8 +1,8 @@
 package com.senierr.media.repository
 
 import android.app.Application
-import com.senierr.media.local.repository.service.api.IMediaService
-import com.senierr.media.local.repository.store.db.DatabaseManager
+import com.senierr.media.repository.service.api.IMediaService
+import com.senierr.media.repository.store.db.DatabaseManager
 import com.senierr.media.repository.service.impl.MediaService
 
 /**

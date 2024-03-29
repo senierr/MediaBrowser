@@ -1,4 +1,4 @@
-package com.senierr.media.local.repository.entity
+package com.senierr.media.repository.entity
 
 import android.content.ContentUris
 import android.net.Uri

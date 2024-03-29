@@ -1,4 +1,4 @@
-package com.pateo.xmly.repository.store.sp
+package com.senierr.media.repository.store.sp
 
 import android.content.Context
 import com.senierr.media.repository.utils.SPUtil

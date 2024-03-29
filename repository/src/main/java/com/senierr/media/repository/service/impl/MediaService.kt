@@ -1,5 +1,6 @@
 package com.senierr.media.repository.service.impl
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,17 +13,20 @@ import android.os.Looper
 import android.os.storage.StorageManager
 import android.provider.MediaStore
 import android.util.Log
-import com.senierr.media.local.repository.entity.LocalAudio
-import com.senierr.media.local.repository.entity.LocalFolder
-import com.senierr.media.local.repository.entity.LocalImage
-import com.senierr.media.local.repository.entity.LocalVideo
-import com.senierr.media.local.repository.service.api.IMediaService
-import com.senierr.media.repository.MediaRepository
+import com.senierr.media.repository.entity.LocalAudio
+import com.senierr.media.repository.entity.LocalFolder
+import com.senierr.media.repository.entity.LocalImage
+import com.senierr.media.repository.entity.LocalVideo
+import com.senierr.media.repository.service.api.IMediaService
 import com.senierr.media.repository.entity.UsbStatus
 import com.senierr.media.repository.entity.VolumeInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -32,34 +36,22 @@ import java.io.File
  * @author senierr_zhou
  * @date 2023/07/28
  */
+@SuppressLint("UnspecifiedRegisterReceiverFlag")
 class MediaService(private val context: Context) : IMediaService {
 
     companion object {
         private const val TAG = "UsbService"
     }
 
-    // U盘状态
-    private val _usbStatus = MutableStateFlow(UsbStatus(UsbStatus.ACTION_EJECT, null))
+    // 盘符状态
+    private val _volumeStatus = MutableSharedFlow<VolumeInfo>()
 
     // USB挂载监听广播
     private val usbReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             Log.d(TAG, "usbReceiver - action: ${intent?.action}, path: ${intent?.data?.path}")
-            val path = intent?.data?.path
-            when (intent?.action) {
-                Intent.ACTION_MEDIA_MOUNTED -> {
-                    _usbStatus.tryEmit(UsbStatus(UsbStatus.ACTION_MOUNTED, path))
-                }
-                Intent.ACTION_MEDIA_SCANNER_STARTED -> {
-                    _usbStatus.tryEmit(UsbStatus(UsbStatus.ACTION_SCANNER_STARTED, path))
-                }
-                Intent.ACTION_MEDIA_SCANNER_FINISHED -> {
-                    _usbStatus.tryEmit(UsbStatus(UsbStatus.ACTION_SCANNER_FINISHED, path))
-                }
-                Intent.ACTION_MEDIA_EJECT -> {
-                    _usbStatus.tryEmit(UsbStatus(UsbStatus.ACTION_EJECT, path))
-                }
-            }
+            val path = intent?.data?.path?: return
+            _volumeStatus.tryEmit(VolumeInfo(path, intent.action?: Intent.ACTION_MEDIA_CHECKING))
         }
     }
     // 媒体文件变更监听
@@ -69,12 +61,10 @@ class MediaService(private val context: Context) : IMediaService {
             if (MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString() == uri?.toString()) {
                 Log.d(TAG, "ContentObserver - onChange: $selfChange, $uri")
                 // 媒体更新，通知刷新当前文件夹数据
-                _usbStatus.tryEmit(UsbStatus(UsbStatus.ACTION_CONTENT_CHANGED, null))
+//                _volumeStatus.tryEmit(VolumeInfo(UsbStatus.ACTION_CONTENT_CHANGED, null))
             }
         }
     }
-
-    private var syncUsbFilesJob: Job? = null
 
     init {
         // 注册U盘状态监听
@@ -89,43 +79,45 @@ class MediaService(private val context: Context) : IMediaService {
         context.contentResolver.registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, true, contentObserver)
     }
 
-    override suspend fun fetchUsbVolumes(): List<VolumeInfo> {
+    override suspend fun fetchVolumeInfoList(): List<VolumeInfo> {
         return withContext(Dispatchers.IO) {
-            Log.d(TAG, "fetchUsbVolumes start")
             val result = mutableListOf<VolumeInfo>()
-            val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
-            storageManager.storageVolumes
-                .filter {
-                    // 过滤Removable(包含外置sd卡，usb等)且已经装载时
-                    it.isRemovable && it.state == Environment.MEDIA_MOUNTED
-            }
-                .forEach { volume ->
-                try {
-                    val volumeClass = Class.forName(volume.javaClass.name)
-                    val getPath = volumeClass.getDeclaredMethod("getPath", *emptyArray())
-                    getPath.isAccessible = true
-                    val path = getPath.invoke(volume) as String?
-                    if (!path.isNullOrBlank()) {
-                        val volumeInfo = VolumeInfo(
-                            volume.uuid, path, volume.getDescription(context), volume.state, volume.isRemovable
-                        )
-                        result.add(volumeInfo)
+            val projection = arrayOf(
+                MediaStore.Files.FileColumns._ID,
+                MediaStore.Files.FileColumns.DISPLAY_NAME,
+                MediaStore.Files.FileColumns.DATA
+            )
+            val selection = "${MediaStore.Video.Media.DATA} not like ?"
+            val selectionArgs = arrayOf("${Environment.getExternalStorageDirectory().path}%")
+            context.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null
+            )?.use { cursor ->
+                val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
+                val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DISPLAY_NAME)
+                val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
+                while (isActive && cursor.moveToNext()) {
+                    val id = cursor.getLong(idColumn)
+                    val displayName = cursor.getString(displayNameColumn)
+                    val data = cursor.getString(dataColumn)
+
+                    if (displayName.isNotEmpty() && data.isNotEmpty()) {
+//                        val volumeInfo = VolumeInfo(
+//                            id, data, displayName, data.substringBeforeLast(File.separatorChar), mimeType
+//                        )
+//                        result.add(volumeInfo)
+                        Log.d(TAG, "Add image: $data")
+                    } else {
+                        Log.w(TAG, "Add image error: $id, $displayName, $data")
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
             }
-            // 测试用
-            val volumeInfo = VolumeInfo(
-                null, Environment.getExternalStorageDirectory().path,
-                "内部存储",
-                Environment.MEDIA_MOUNTED,
-                true
-            )
-            result.add(volumeInfo)
-            Log.d(TAG, "fetchUsbVolumes end: $result")
+            Log.d(TAG, "Add image success: ${result.size}")
             return@withContext result
         }
+    }
+
+    override suspend fun observeVolumeStatus(): SharedFlow<VolumeInfo> {
+        return _volumeStatus.asSharedFlow()
     }
 
     override suspend fun fetchLocalFoldersWithImage(bucketPath: String): List<LocalFolder> {

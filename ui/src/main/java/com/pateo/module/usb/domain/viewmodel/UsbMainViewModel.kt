@@ -1,6 +1,5 @@
 package com.pateo.module.usb.domain.viewmodel
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,13 +13,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pateo.module.usb.UsbApplication
-import com.pateo.module.usb.utils.SortUtil.sort
+import com.senierr.base.util.LogUtil
 import com.senierr.media.repository.MediaRepository
-import com.senierr.media.repository.entity.UsbFile
+import com.senierr.media.repository.entity.LocalFile
 import com.senierr.media.repository.entity.UsbStatus
 import com.senierr.media.repository.entity.VolumeInfo
-import com.senierr.base.support.ktx.showToast
-import com.senierr.base.util.LogUtil
+import com.senierr.media.repository.service.api.IMediaService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -32,7 +30,6 @@ import kotlinx.coroutines.launch
  * @author senierr_zhou
  * @date 2023/07/28
  */
-@SuppressLint("UnspecifiedRegisterReceiverFlag")
 class UsbMainViewModel : ViewModel() {
 
     companion object {
@@ -46,10 +43,10 @@ class UsbMainViewModel : ViewModel() {
     private val _currentFolderPath = MutableSharedFlow<String?>(1)
     val currentFolderPath = _currentFolderPath.asSharedFlow()
     // 当前目录下数据
-    private val _usbFiles = MutableSharedFlow<List<UsbFile>>(1)
+    private val _usbFiles = MutableSharedFlow<List<LocalFile>>(1)
     val usbFiles = _usbFiles.asSharedFlow()
 
-    private val usbService: IUsbService = MediaRepository.getService()
+    private val mediaService: IMediaService = MediaRepository.getService()
 
     // 当前挂载盘
     private var currentVolumeInfo: VolumeInfo? = null
@@ -64,22 +61,6 @@ class UsbMainViewModel : ViewModel() {
             when (intent?.action) {
                 Intent.ACTION_MEDIA_MOUNTED -> {
                     _usbStatus.tryEmit(UsbStatus(UsbStatus.ACTION_MOUNTED, ""))
-                    viewModelScope.launch {
-                        val volumes = usbService.fetchUsbVolumes()
-                        if (volumes.isEmpty()) {
-                            _usbFiles.emit(emptyList())
-                        } else {
-                            volumes.firstOrNull()?.let {
-                                currentVolumeInfo = it
-                                // 清除旧数据
-                                usbService.clear(it.path)
-                                // 同步新数据
-                                usbService.syncUsbFiles(it.path)
-                                // 拉取新数据
-                                fetchUsbFiles(it.path)
-                            }
-                        }
-                    }
                 }
                 Intent.ACTION_MEDIA_SCANNER_STARTED -> {
                     if (currentVolumeInfo != null) {
@@ -90,27 +71,11 @@ class UsbMainViewModel : ViewModel() {
                     if (currentVolumeInfo != null) {
                         _usbStatus.tryEmit(UsbStatus(UsbStatus.ACTION_SCANNER_FINISHED, ""))
                     }
-                    viewModelScope.launch {
-                        currentVolumeInfo?.let { volumeInfo ->
-                            // 再次全量同步下数据
-                            usbService.syncUsbFiles(volumeInfo.path)
-                            // 拉取新数据
-                            currentFolderPath.replayCache.firstOrNull()?.let {
-                                fetchUsbFiles(it)
-                            }
-                        }
-                    }
                 }
                 Intent.ACTION_MEDIA_EJECT -> {
                     _usbStatus.tryEmit(UsbStatus(UsbStatus.ACTION_EJECT, ""))
                     // 先取消正在执行的任务
                     fetchUsbFilesJob?.cancel()
-                    viewModelScope.launch {
-                        // 再清除缓存数据
-                        currentVolumeInfo?.let {
-                            usbService.clear(it.path)
-                        }
-                    }
                     currentVolumeInfo = null
                     _currentFolderPath.tryEmit(null)
                     _usbFiles.tryEmit(emptyList())
@@ -124,19 +89,9 @@ class UsbMainViewModel : ViewModel() {
             super.onChange(selfChange, uri)
             if (MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString() == uri?.toString()) {
                 Log.d(TAG, "ContentObserver - onChange: $selfChange, $uri")
-                viewModelScope.launch {
-                    currentVolumeInfo?.let { volumeInfo ->
-                        usbService.syncUsbFiles(volumeInfo.path)
-                        // 拉取新数据
-                        currentFolderPath.replayCache.firstOrNull()?.let {
-                            fetchUsbFiles(it)
-                        }
-                    }
-                }
             }
         }
     }
-
 
     init {
         LogUtil.logD(TAG, "init")
@@ -152,26 +107,6 @@ class UsbMainViewModel : ViewModel() {
         UsbApplication.getContext()
             .contentResolver
             .registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, true, contentObserver)
-
-        viewModelScope.launch {
-            val volumes = usbService.fetchUsbVolumes()
-            volumes.forEach {
-                UsbApplication.getContext().showToast("${it.description}, ${it.path}")
-            }
-//            if (volumes.isEmpty()) {
-//                _usbFiles.emit(emptyList())
-//            } else {
-//                volumes.firstOrNull()?.let {
-//                    currentVolumeInfo = it
-//                    // 清除旧数据
-//                    usbService.clear(it.path)
-//                    // 同步新数据
-//                    usbService.syncUsbFiles(it.path)
-//                    // 拉取新数据
-//                    fetchUsbFiles(it.path)
-//                }
-//            }
-        }
     }
 
     override fun onCleared() {
@@ -195,23 +130,23 @@ class UsbMainViewModel : ViewModel() {
             LogUtil.logD(TAG, "fetchUsbFiles: $folderPath, $volumePath")
             if (folderPath.isBlank() || volumePath.isNullOrBlank()) return@launch
             _currentFolderPath.emit(folderPath)
-            if (folderPath == volumePath) {
-                // 当前是U盘根目录
-                val usbFolders = usbService.fetchUsbFilesByVolume(
-                    volumePath, true, false, false, false
-                ).sort { it.displayName }
-                val usbMedias = usbService.fetchUsbFilesByBucket(volumePath, false)
-                    .sort { it.displayName }
-                // 封装返回数据
-                val usbFiles = usbFolders + usbMedias
-                LogUtil.logD(TAG, "fetchUsbFilesByVolume success: ${usbFiles.size}")
-                _usbFiles.emit(usbFiles)
-            } else {
-                // 当前是子目录
-                val usbMedias = usbService.fetchUsbFilesByBucket(folderPath, false).sort { it.displayName }
-                LogUtil.logD(TAG, "fetchUsbFilesByBucket success: ${usbMedias.size}")
-                _usbFiles.emit(usbMedias)
-            }
+//            if (folderPath == volumePath) {
+//                // 当前是U盘根目录
+//                val usbFolders = usbService.fetchUsbFilesByVolume(
+//                    volumePath, true, false, false, false
+//                ).sort { it.displayName }
+//                val usbMedias = usbService.fetchUsbFilesByBucket(volumePath, false)
+//                    .sort { it.displayName }
+//                // 封装返回数据
+//                val usbFiles = usbFolders + usbMedias
+//                LogUtil.logD(TAG, "fetchUsbFilesByVolume success: ${usbFiles.size}")
+//                _usbFiles.emit(usbFiles)
+//            } else {
+//                // 当前是子目录
+//                val usbMedias = usbService.fetchUsbFilesByBucket(folderPath, false).sort { it.displayName }
+//                LogUtil.logD(TAG, "fetchUsbFilesByBucket success: ${usbMedias.size}")
+//                _usbFiles.emit(usbMedias)
+//            }
         }
     }
 }

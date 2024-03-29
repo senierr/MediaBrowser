@@ -1,4 +1,4 @@
-package com.pateo.xmly.repository.store.sp
+package com.senierr.media.repository.store.sp
 
 /**
  * SharedPreferences Key值管理

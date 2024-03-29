@@ -1,10 +1,12 @@
-package com.senierr.media.local.repository.service.api
+package com.senierr.media.repository.service.api
 
 import com.senierr.media.repository.entity.VolumeInfo
-import com.senierr.media.local.repository.entity.LocalAudio
-import com.senierr.media.local.repository.entity.LocalFolder
-import com.senierr.media.local.repository.entity.LocalImage
-import com.senierr.media.local.repository.entity.LocalVideo
+import com.senierr.media.repository.entity.LocalAudio
+import com.senierr.media.repository.entity.LocalFolder
+import com.senierr.media.repository.entity.LocalImage
+import com.senierr.media.repository.entity.LocalVideo
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * 数据服务
@@ -15,9 +17,14 @@ import com.senierr.media.local.repository.entity.LocalVideo
 interface IMediaService {
 
     /**
-     * 获取U盘挂载信息
+     * 获取盘符挂载信息
      */
-    suspend fun fetchUsbVolumes(): List<VolumeInfo>
+    suspend fun fetchVolumeInfoList(): List<VolumeInfo>
+
+    /**
+     * 订阅盘符挂载状态
+     */
+    suspend fun observeVolumeStatus(): SharedFlow<VolumeInfo>
 
     /**
      * 拉取指定目录下包含图片的文件夹

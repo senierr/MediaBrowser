@@ -1,10 +1,10 @@
-package com.senierr.media.local.repository.store.db.dao
+package com.senierr.media.repository.store.db.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.senierr.media.local.repository.entity.PlaySession
+import com.senierr.media.repository.entity.PlaySession
 
 /**
  * 播放会话

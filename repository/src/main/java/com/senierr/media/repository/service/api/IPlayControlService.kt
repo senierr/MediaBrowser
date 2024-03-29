@@ -1,4 +1,4 @@
-package com.senierr.media.local.repository.service.api
+package com.senierr.media.repository.service.api
 
 /**
  * 播控服务
