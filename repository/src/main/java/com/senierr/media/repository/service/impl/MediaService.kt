@@ -13,6 +13,7 @@ import android.os.Looper
 import android.os.storage.StorageManager
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import com.senierr.media.repository.entity.LocalAudio
 import com.senierr.media.repository.entity.LocalFolder
 import com.senierr.media.repository.entity.LocalImage
@@ -52,6 +53,7 @@ class MediaService(private val context: Context) : IMediaService {
             Log.d(TAG, "usbReceiver - action: ${intent?.action}, path: ${intent?.data?.path}")
             val path = intent?.data?.path?: return
             _volumeStatus.tryEmit(VolumeInfo(path, intent.action?: Intent.ACTION_MEDIA_CHECKING))
+            Toast.makeText(context, intent.action, Toast.LENGTH_SHORT).show()
         }
     }
     // 媒体文件变更监听
@@ -122,29 +124,59 @@ class MediaService(private val context: Context) : IMediaService {
 
     override suspend fun fetchLocalFoldersWithImage(bucketPath: String): List<LocalFolder> {
         return withContext(Dispatchers.IO) {
-            val localImages = fetchLocalImages(bucketPath)
+            val localImages = fetchLocalImages(bucketPath, true)
             val localFolders = mutableMapOf<String, LocalFolder>()
-            localImages.filter {
-                it.path.isNotBlank()
-            }.forEach {
-                val path = it.path.substringBeforeLast(File.separatorChar)
-                if (!localFolders.contains(path)) {
-                    val displayName = path.substringAfterLast(File.separatorChar)
-                    val folderBucketPath = path.substringBeforeLast(File.separatorChar)
-                    localFolders[path] = LocalFolder(path, displayName, folderBucketPath)
+            localImages.filter { it.path.isNotBlank() } // 过滤无效数据
+                .map { it.path.substringBeforeLast(File.separatorChar) } // 转换为文件夹路径
+                .filter { it != bucketPath } // 移除查询文件夹本身
+                .forEach { path ->
+                    if (!localFolders.contains(path)) {
+                        val displayName = path.substringAfterLast(File.separatorChar)
+                        val folderBucketPath = path.substringBeforeLast(File.separatorChar)
+                        localFolders[path] = LocalFolder(path, displayName, folderBucketPath)
+                    }
+                    localFolders[path]?.apply { imageCount++ }
                 }
-                localFolders[path]?.apply { imageCount++ }
-            }
             return@withContext localFolders.values.toList()
         }
     }
 
     override suspend fun fetchLocalFoldersWithAudio(bucketPath: String): List<LocalFolder> {
-        TODO("Not yet implemented")
+        return withContext(Dispatchers.IO) {
+            val localAudios = fetchLocalAudios(bucketPath, true)
+            val localFolders = mutableMapOf<String, LocalFolder>()
+            localAudios.filter { it.path.isNotBlank() } // 过滤无效数据
+                .map { it.path.substringBeforeLast(File.separatorChar) } // 转换为文件夹路径
+                .filter { it != bucketPath } // 移除查询文件夹本身
+                .forEach { path ->
+                    if (!localFolders.contains(path)) {
+                        val displayName = path.substringAfterLast(File.separatorChar)
+                        val folderBucketPath = path.substringBeforeLast(File.separatorChar)
+                        localFolders[path] = LocalFolder(path, displayName, folderBucketPath)
+                    }
+                    localFolders[path]?.apply { audioCount++ }
+                }
+            return@withContext localFolders.values.toList()
+        }
     }
 
     override suspend fun fetchLocalFoldersWithVideo(bucketPath: String): List<LocalFolder> {
-        TODO("Not yet implemented")
+        return withContext(Dispatchers.IO) {
+            val localVideos = fetchLocalVideos(bucketPath, true)
+            val localFolders = mutableMapOf<String, LocalFolder>()
+            localVideos.filter { it.path.isNotBlank() } // 过滤无效数据
+                .map { it.path.substringBeforeLast(File.separatorChar) } // 转换为文件夹路径
+                .filter { it != bucketPath } // 移除查询文件夹本身
+                .forEach { path ->
+                    if (!localFolders.contains(path)) {
+                        val displayName = path.substringAfterLast(File.separatorChar)
+                        val folderBucketPath = path.substringBeforeLast(File.separatorChar)
+                        localFolders[path] = LocalFolder(path, displayName, folderBucketPath)
+                    }
+                    localFolders[path]?.apply { videoCount++ }
+                }
+            return@withContext localFolders.values.toList()
+        }
     }
 
     override suspend fun fetchLocalImages(bucketPath: String, includeSubfolder: Boolean): List<LocalImage> {

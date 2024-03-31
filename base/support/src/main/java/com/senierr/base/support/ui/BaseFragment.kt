@@ -59,6 +59,11 @@ abstract class BaseFragment<VB: ViewBinding> : Fragment() {
         LogUtil.logI(TAG, "onViewCreated")
     }
 
+    override fun onStart() {
+        super.onStart()
+        LogUtil.logI(TAG, "onStart")
+    }
+
     override fun onResume() {
         super.onResume()
         LogUtil.logI(TAG, "onResume")
@@ -67,6 +72,11 @@ abstract class BaseFragment<VB: ViewBinding> : Fragment() {
     override fun onPause() {
         super.onPause()
         LogUtil.logI(TAG, "onPause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        LogUtil.logI(TAG, "onStop")
     }
 
     override fun onDestroyView() {

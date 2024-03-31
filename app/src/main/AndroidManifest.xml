@@ -3,7 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.senierr.media">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
 
     <application
         android:name=".SessionApplication"
@@ -12,10 +15,9 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.MediaBrowser"
-        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="33">
         <activity
-            android:name="com.senierr.media.MainActivity"
+            android:name=".domain.home.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,5 +25,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.senierr.media.domain.image.ImagePreviewActivity"
+            android:theme="@style/Theme.Fullscreen.Black"/>
+        <activity
+            android:name="com.senierr.media.domain.video.VideoPlayerActivity"
+            android:theme="@style/Theme.Fullscreen.Black"/>
     </application>
 </manifest>

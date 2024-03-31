@@ -1,8 +1,22 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.MediaBrowser" parent="Theme.MaterialComponents.Light">
+
+    <style name="Theme.MediaBrowser" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/app_theme</item>
-        <item name="colorPrimaryDark">@color/app_theme</item>
+        <item name="colorPrimaryDark">@color/transparent</item>
         <item name="colorAccent">@color/app_theme</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <style name="Theme.Fullscreen" parent="Theme.MediaBrowser">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+
+    <style name="Theme.Fullscreen.Black" parent="Theme.Fullscreen">
+        <item name="android:windowBackground">@color/window_black</item>
     </style>
 </resources>

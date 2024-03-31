@@ -1,35 +1,51 @@
 package com.senierr.media
 
 import android.app.Application
+import android.os.Build
 import android.util.Log
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.decode.VideoFrameDecoder
 import coil.disk.DiskCache
 import coil.imageLoader
 import coil.memory.MemoryCache
-import com.pateo.module.usb.UsbApplication
 import com.senierr.base.util.LogUtil
+import com.senierr.media.repository.MediaRepository
+import com.senierr.media.utils.LocalAudioFetcher
 
 /**
  *
  * @author senierr_zhou
  * @date 2023/07/28
  */
-class SessionApplication : Application(), ImageLoaderFactory {
+class SessionApplication : Application(), ImageLoaderFactory, ViewModelStoreOwner {
 
     companion object {
         private const val TAG = "SessionApplication"
+
+        private lateinit var application: SessionApplication
+
+        fun getInstance(): SessionApplication = application
     }
 
     private val isDebug = true
+    private val _viewModelStore = ViewModelStore()
 
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "onCreate")
-        LogUtil.isDebug = isDebug
+        application = this
 
-        UsbApplication.onCreate(this)
+        LogUtil.isDebug = isDebug
+        MediaRepository.initialize(application)
     }
+
+    override val viewModelStore: ViewModelStore
+        get() = _viewModelStore
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
@@ -57,16 +73,17 @@ class SessionApplication : Application(), ImageLoaderFactory {
             }
             .allowRgb565(true)
             .crossfade(true)
-//            .components {
-//                // 视频解码器
-//                add(VideoFrameDecoder.Factory())
-//                // GIF解码器
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-//                    add(ImageDecoderDecoder.Factory())
-//                } else {
-//                    add(GifDecoder.Factory())
-//                }
-//            }
+            .components {
+                // 视频解码器
+                add(VideoFrameDecoder.Factory())
+                // GIF解码器
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+                add(LocalAudioFetcher.Factory())
+            }
             .build()
     }
 }

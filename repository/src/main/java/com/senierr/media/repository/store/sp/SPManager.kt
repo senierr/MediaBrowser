@@ -1,7 +1,7 @@
 package com.senierr.media.repository.store.sp
 
 import android.content.Context
-import com.senierr.media.repository.utils.SPUtil
+import com.senierr.base.util.SPUtil
 
 /**
  * SharedPreferences管理器

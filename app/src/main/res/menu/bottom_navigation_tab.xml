@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/tab_image"
+        android:icon="@drawable/ic_photo"
+        android:title="@string/tab_image"/>
+
+    <item
+        android:id="@+id/tab_audio"
+        android:icon="@drawable/ic_audio"
+        android:title="@string/tab_audio"/>
+
+    <item
+        android:id="@+id/tab_video"
+        android:icon="@drawable/ic_movie"
+        android:title="@string/tab_video"/>
+</menu>
