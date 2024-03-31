@@ -1,25 +1,33 @@
 package com.senierr.media.domain.audio
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
+import coil.load
 import com.senierr.adapter.internal.MultiTypeAdapter
+import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ktx.onClick
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
-import com.senierr.media.databinding.ActivityVideoPlayerBinding
+import com.senierr.media.databinding.ActivityAudioPlayerBinding
+import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
 import com.senierr.media.domain.audio.wrapper.PlayingListWrapper
-import com.senierr.media.repository.entity.LocalVideo
+import com.senierr.media.domain.home.viewmodel.AudioViewModel
+import com.senierr.media.ktx.applicationViewModel
+import com.senierr.media.repository.entity.LocalAudio
+import com.senierr.media.repository.entity.LocalFile
+import com.senierr.media.utils.DiffUtils
 import com.senierr.media.utils.Utils
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.isActive
 
 /**
  * 音乐播放页面
@@ -27,15 +35,12 @@ import kotlinx.coroutines.launch
  * @author senierr_zhou
  * @date 2023/07/28
  */
-class AudioPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
+class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
 
     companion object {
-        private const val INTERVAL_HIDE_SHORT = 1 * 1000L
-        private const val INTERVAL_HIDE_LONG = 5 * 1000L
-
-        fun start(context: Context, usbVideo: LocalVideo) {
+        fun start(context: Context, localAudio: LocalAudio) {
             context.startActivity(Intent(context, AudioPlayerActivity::class.java).apply {
-                putExtra("usbVideo", usbVideo)
+                putExtra("localAudio", localAudio)
             })
         }
     }
@@ -46,201 +51,175 @@ class AudioPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     // 进度条是否处于拖动状态
     private var isSeekBarDragging = false
 
-    // 隐藏控制栏任务
-    private var hideControlBarJob: Job? = null
-    // 隐藏定位进度任务
-    private var hideSeekProgressJob: Job? = null
+    private val audioViewModel: AudioViewModel by applicationViewModel()
+    private val controlViewModel: AudioControlViewModel by applicationViewModel()
 
-//    // 播放状态变更回调
-//    private val stateUiListener = GSYStateUiListener { state ->
-//        LogUtil.logD(TAG, "state-changed: $state")
-//        // 图标
-//        if (state == StandardGSYVideoPlayer.CURRENT_STATE_PLAYING) {
-//            binding.btnPlayOrPause.setImageResource(R.drawable.ic_pause_circle)
-//        } else {
-//            binding.btnPlayOrPause.setImageResource(R.drawable.ic_play_circle)
-//        }
-//    }
-//    // 播放进度回调
-//    private val videoProgressListener = GSYVideoProgressListener { _, _, currentPosition, duration ->
-//        notifyBottomProgress(currentPosition, duration)
-//    }
-//    // 播放器回调
-//    private val videoAllCallBack = object : GSYSampleCallBack() {
-//        override fun onStartPrepared(url: String?, vararg objects: Any?) {
-//            val title = objects.elementAt(0)
-//            if (title is String) {
-//                notifyTitle(title)
-//            }
-//        }
-//
-//        override fun onPrepared(url: String?, vararg objects: Any?) {
-//            // 检查是否能播放 TODO
-//
-//            // 缓存播放记录 TODO
-//        }
-//
-//        override fun onAutoComplete(url: String?, vararg objects: Any?) {
-//            // 自动播放下一首
-//            playNext(true)
-//        }
-//
-//        override fun onPlayError(url: String?, vararg objects: Any?) {
-//            showToast("播放错误")
-//            finish()
-//        }
-//    }
-//
-//    // 触摸控制
-//    private val onMediaControlListener = object : OnMediaControlListener() {
-//        override fun onClick() {
-//            // 单击切换控制栏显示
-//            if (isControlBarShowed()) {
-//                hideControlBar()
-//            } else {
-//                showControlBar()
-//            }
-//        }
-//
-//        override fun onVolumeChanged(distanceY: Float) {
-//            // 音量调节 TODO
-////            statusViewModel.adjustVolume(distanceY > 0)
-//        }
-//
-//        override fun onBrightnessChanged(distanceY: Float) {
-//            // 亮度调节 TODO
-////            statusViewModel.adjustBrightness(distanceY > 0)
-//        }
-//    }
-
-
-
-    // 当前播放的视频
-    private var currentUsbVideo: LocalVideo? = null
-    // 更新数据任务
-    private var notifyDataChangedJob: Job? = null
-
-    override fun createViewBinding(layoutInflater: LayoutInflater): ActivityVideoPlayerBinding {
-        return ActivityVideoPlayerBinding.inflate(layoutInflater)
+    override fun createViewBinding(layoutInflater: LayoutInflater): ActivityAudioPlayerBinding {
+        return ActivityAudioPlayerBinding.inflate(layoutInflater)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val usbVideo: LocalVideo? = intent.getParcelableExtra("usbVideo")
-        if (usbVideo == null) {
-            finish()
-            return
-        }
         initView()
         initViewModel()
     }
 
-    /********************************************* 初始化 *********************************************/
-
-    /**
-     * 初始化页面
-     */
-    @SuppressLint("ClickableViewAccessibility")
     private fun initView() {
         // 返回按钮
-        binding.btnBack.onClick { onBackPressed() }
+        binding.layoutTopBar.btnBack.onClick {
+            LogUtil.logD(TAG, "btnBack onClick")
+            finish()
+        }
         // 上一首
         binding.btnPlayPrevious.onClick {
-            showControlBar()
+            LogUtil.logD(TAG, "btnPlayPrevious onClick")
+            controlViewModel.getMediaController()?.run {
+                if (hasPreviousMediaItem()) {
+                    seekToPreviousMediaItem()
+                }
+            }
         }
         // 播放/暂停
         binding.btnPlayOrPause.onClick {
-            showControlBar()
+            LogUtil.logD(TAG, "btnPlayOrPause onClick")
+            controlViewModel.getMediaController()?.run {
+                if (isPlaying) {
+                    pause()
+                } else {
+                    play()
+                }
+            }
         }
         // 下一首
         binding.btnPlayNext.onClick {
-            showControlBar()
+            LogUtil.logD(TAG, "btnPlayNext onClick")
+            controlViewModel.getMediaController()?.run {
+                if (hasNextMediaItem()) {
+                    seekToNextMediaItem()
+                }
+            }
         }
         // 进度条
         binding.sbSeek.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                if (p2 && isSeekBarDragging) {
-                    showControlBar()
-                }
-            }
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {}
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
                 isSeekBarDragging = true
-//                binding.mpPlayer.cancelFastPlay() TODO
             }
 
             override fun onStopTrackingTouch(p0: SeekBar?) {
                 isSeekBarDragging = false
-//                binding.vpPlayer.seekTo(binding.sbSeek.progress.toLong())
+                controlViewModel.getMediaController()?.run {
+                    seekTo(binding.sbSeek.progress.toLong())
+                }
             }
         })
-        // 控制区域
-        binding.llControl.onClick {
-            if (isControlBarShowed()) {
-                hideControlBar()
-            } else {
-                showControlBar()
-            }
-        }
         // 播放列表
         binding.btnPlayingList.onClick {
             showPlayingList()
-            hideControlBar()
         }
         binding.btnClose.onClick { hidePlayingList() }
         binding.llPlayingList.onClick { hidePlayingList() }
 
         binding.rvPlayingList.layoutManager = LinearLayoutManager(this)
-//        playingListWrapper.setOnItemClickListener { _, _, item -> startPlay(item) }
+        playingListWrapper.setOnItemClickListener { _, _, item ->
+            LogUtil.logD(TAG, "playingListWrapper onClick: $item")
+
+        }
         multiTypeAdapter.register(playingListWrapper)
         binding.rvPlayingList.adapter = multiTypeAdapter
     }
 
     private fun initViewModel() {
-//        mainViewModel.usbStatus
-//            .onEach {
-//                LogUtil.logD(TAG, "usbStatus-onChanged: $it")
-//                if (it.action == UsbStatus.ACTION_EJECT) {
-//                    finish()
-//                }
-//            }
-//            .launchIn(lifecycleScope)
-//        mainViewModel.usbFiles
-//            .onEach {
-//                val items = it.filterIsInstance<UsbVideo>()
-//                LogUtil.logD(TAG, "usbFiles-onChanged: ${items.size}")
-//                if (items.isNotEmpty()) {
-//                    notifyPlayingListDataChanged(items)
-//                }
-//            }
-//            .launchIn(lifecycleScope)
-    }
-
-    /********************************************* UI刷新 *********************************************/
-    /**
-     * 控制栏是否显示
-     */
-    private fun isControlBarShowed() = binding.llControl.visibility == View.VISIBLE
-
-    /**
-     * 显示控制栏
-     */
-    private fun showControlBar() {
-        binding.llControl.visibility = View.VISIBLE
-        hideControlBar(INTERVAL_HIDE_LONG)
+        audioViewModel.localFiles
+            .onEach { notifyLocalFilesChanged(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.playingItem
+            .onEach { notifyPlayingItem(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.playStatus
+            .onEach { notifyPlayStatus(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.progress
+            .onEach { notifyProgress(it) }
+            .launchIn(lifecycleScope)
     }
 
     /**
-     * 隐藏控制栏
+     * 更新页面数据
      */
-    private fun hideControlBar(delayTimes: Long = 0) {
-        hideControlBarJob?.cancel()
-        hideControlBarJob = lifecycleScope.launch {
-            if (delayTimes != 0L) {
-                delay(delayTimes)
+    private fun notifyLocalFilesChanged(state: UIState<List<LocalFile>>) {
+        LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
+        when (state) {
+            is UIState.Content -> {
+                lifecycleScope.launchSingle("notifyLocalFilesChanged") {
+                    val oldList = multiTypeAdapter.data.filterIsInstance<LocalAudio>()
+                    val newList = state.value.filterIsInstance<LocalAudio>()
+                    val diffResult = DiffUtils.diffLocalFile(oldList, newList)
+                    if (isActive) {
+                        // 更新播放列表
+                        diffResult.dispatchUpdatesTo(multiTypeAdapter)
+                        multiTypeAdapter.data.clear()
+                        multiTypeAdapter.data.addAll(newList)
+                        // 更新队列
+                        val localAudio: LocalAudio? = intent.getParcelableExtra("localAudio")
+                        val startIndex = newList.indexOfFirst { it.id == localAudio?.id }
+                        controlViewModel.getMediaController()?.run {
+                            clearMediaItems()
+                            val mediaItems = newList.map { audio ->
+                                MediaItem.Builder()
+                                    .setUri(audio.getUri())
+                                    .setTag(audio)
+                                    .build()
+                            }
+                            if (startIndex == -1) {
+                                setMediaItems(mediaItems)
+                            } else {
+                                setMediaItems(mediaItems, startIndex, 0)
+                            }
+                            playWhenReady = true
+                            prepare()
+                        }
+                        Log.d(TAG, "notifyLocalFilesChanged: ${oldList.size} -> ${newList.size}")
+                    }
+                }
             }
-            binding.llControl.visibility = View.GONE
+            is UIState.Error -> { finish() }
+            else -> {}
         }
+    }
+
+    /**
+     * 更新播放项
+     */
+    private fun notifyPlayingItem(playingItem: MediaItem?) {
+        LogUtil.logD(TAG, "notifyPlayingItem: $playingItem")
+        val localAudio = playingItem?.localConfiguration?.tag
+        if (localAudio is LocalAudio) {
+            binding.layoutTopBar.tvTitle.text = localAudio.displayName
+            binding.ivCover.load(localAudio)
+        }
+    }
+
+    /**
+     * 更新播放状态
+     */
+    private fun notifyPlayStatus(isPlaying: Boolean) {
+        LogUtil.logD(TAG, "notifyPlayStatus: $isPlaying")
+        binding.btnPlayOrPause.isSelected = isPlaying
+    }
+
+    /**
+     * 更新底部播放进度
+     */
+    private fun notifyProgress(progress: AudioControlViewModel.Progress) {
+        LogUtil.logD(TAG, "notifyProgress: ${progress.position} / ${progress.duration}, $isSeekBarDragging")
+        if (progress.position < 0 || progress.duration <= 0) return
+        if (isSeekBarDragging) return
+        binding.sbSeek.max = progress.duration.toInt()
+        binding.sbSeek.progress = progress.position.toInt()
+        binding.tvPosition.text = Utils.formatDuration(progress.position)
+        binding.tvDuration.text = Utils.formatDuration(progress.duration)
     }
 
     /**
@@ -257,43 +236,5 @@ class AudioPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     private fun hidePlayingList() {
         LogUtil.logD(TAG, "hidePlayingList")
         binding.llPlayingList.visibility = View.GONE
-    }
-
-    /**
-     * 更新页面数据
-     */
-//    private fun notifyPlayingListDataChanged(newList: List<UsbFile>) {
-//        notifyDataChangedJob?.cancel()
-//        notifyDataChangedJob = lifecycleScope.launch {
-//            val oldList = multiTypeAdapter.data.filterIsInstance<UsbFile>()
-//            val diffResult = DiffUtils.diffUsbFile(oldList, newList)
-//            if (isActive) {
-//                diffResult.dispatchUpdatesTo(multiTypeAdapter)
-//                multiTypeAdapter.data.clear()
-//                multiTypeAdapter.data.addAll(newList)
-//                LogUtil.logD(TAG, "notifyPlayingListDataChanged: ${oldList.size} -> ${newList.size}")
-//            }
-//        }
-//    }
-    
-    /**
-     * 更新标题
-     */
-    private fun notifyTitle(title: String) {
-        LogUtil.logD(TAG, "notifyTitle: $title")
-        binding.tvTitle.text = title
-    }
-
-    /**
-     * 更新底部播放进度
-     */
-    private fun notifyBottomProgress(position: Long, total: Long) {
-        LogUtil.logD(TAG, "notifyBottomProgress: $position / $total, $isSeekBarDragging")
-        if (position < 0 || total <= 0) return
-        if (isSeekBarDragging) return
-        binding.sbSeek.max = total.toInt()
-        binding.sbSeek.progress = position.toInt()
-        binding.tvCurrent.text = Utils.formatDuration(position)
-        binding.tvTotal.text = Utils.formatDuration(total)
     }
 }

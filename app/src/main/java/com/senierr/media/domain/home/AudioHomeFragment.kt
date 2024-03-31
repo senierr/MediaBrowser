@@ -19,6 +19,7 @@ import com.senierr.base.support.ui.recyclerview.GridItemDecoration
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
 import com.senierr.media.databinding.FragmentHomeAudioBinding
+import com.senierr.media.domain.audio.AudioPlayerActivity
 import com.senierr.media.domain.home.viewmodel.AudioViewModel
 import com.senierr.media.domain.home.wrapper.AudioWrapper
 import com.senierr.media.domain.home.wrapper.FolderWrapper
@@ -109,6 +110,7 @@ class AudioHomeFragment : BaseFragment<FragmentHomeAudioBinding>() {
         }
         audioWrapper.setOnItemClickListener { _, _, item ->
             LogUtil.logD(TAG, "audio onClick: $item")
+            AudioPlayerActivity.start(requireContext(), item)
         }
 
         multiTypeAdapter.register(folderWrapper)

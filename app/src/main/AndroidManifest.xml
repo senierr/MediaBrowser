@@ -27,8 +27,12 @@
         </activity>
 
         <activity
-            android:name="com.senierr.media.domain.image.ImagePreviewActivity"
+            android:name=".domain.image.ImagePreviewActivity"
             android:theme="@style/Theme.Fullscreen.Black"/>
+
+        <activity
+            android:name=".domain.audio.AudioPlayerActivity"/>
+
         <activity
             android:name="com.senierr.media.domain.video.VideoPlayerActivity"
             android:theme="@style/Theme.Fullscreen.Black"/>
