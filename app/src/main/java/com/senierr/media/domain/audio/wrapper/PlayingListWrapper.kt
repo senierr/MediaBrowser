@@ -1,15 +1,18 @@
 package com.senierr.media.domain.audio.wrapper
 
-import coil.load
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.RecyclerView
 import com.senierr.adapter.internal.ViewHolder
 import com.senierr.adapter.internal.ViewHolderWrapper
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
 import com.senierr.media.databinding.ItemAudioPlayingListBinding
-import com.senierr.media.databinding.ItemPlayingListBinding
+import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
+import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalAudio
-import com.senierr.media.repository.entity.LocalVideo
-import com.senierr.media.utils.Utils
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 /**
  * 播放列表
@@ -22,39 +25,50 @@ class PlayingListWrapper : ViewHolderWrapper<LocalAudio>(R.layout.item_audio_pla
     companion object {
         private const val TAG = "PlayingListWrapper"
 
-        private const val TAG_PAYLOAD_BG = "payload_bg"
+        private const val PAYLOAD_REFRESH_PLAY_STATUS = "refreshPlayStatus"
     }
 
-    // 上次播放的索引
-    private var lastPlayingPosition: Int = -1
-    // 当前播放索引
-    private var nowPlayingPosition: Int = -1
-        set(value) {
-            lastPlayingPosition = field
-            field = value
-        }
+    private val controlViewModel: AudioControlViewModel by applicationViewModel()
 
-    override fun onBindViewHolder(holder: ViewHolder, item: LocalAudio) {
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        val lifecycleOwner = recyclerView.findViewTreeLifecycleOwner()
+        LogUtil.logD(TAG, "onAttachedToRecyclerView: $lifecycleOwner")
+        if (lifecycleOwner == null) return
+        // 播放状态
+        controlViewModel.playStatus
+            .onEach {
+                LogUtil.logD(TAG, "playStatus: $it")
+                notifyPlayStatus()
+            }
+            .launchIn(lifecycleOwner.lifecycleScope)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, item: LocalAudio) {}
+
+    override fun onBindViewHolder(holder: ViewHolder, item: LocalAudio, payloads: List<Any>) {
         val binding = ItemAudioPlayingListBinding.bind(holder.itemView)
-
-        if (holder.layoutPosition == nowPlayingPosition) {
-            binding.root.setBackgroundResource(R.color.app_theme)
+        if (payloads.contains(PAYLOAD_REFRESH_PLAY_STATUS)) {
+            if (holder.layoutPosition == controlViewModel.currentMediaItemIndex()) {
+                binding.root.setBackgroundResource(R.color.app_theme_light)
+            } else {
+                binding.root.setBackgroundResource(R.color.transparent)
+            }
         } else {
-            binding.root.setBackgroundResource(R.color.transparent)
+            if (holder.layoutPosition == controlViewModel.currentMediaItemIndex()) {
+                binding.root.setBackgroundResource(R.color.app_theme_light)
+            } else {
+                binding.root.setBackgroundResource(R.color.transparent)
+            }
+            binding.tvIndex.text = "${holder.layoutPosition}"
+            binding.tvDisplayName.text = item.displayName
         }
-
-        binding.tvDisplayName.text = item.displayName
     }
 
     /**
-     * 更新当前播放列表项
+     * 刷新播放状态
      */
-    fun notifyPlayingItemChanged(position: Int) {
-        LogUtil.logD(TAG, "notifyPlayingItemChanged: $position")
-        if (position < 0) return
-        nowPlayingPosition = position
-        LogUtil.logD(TAG, "notifyPlayingItemChanged now: $nowPlayingPosition, last: $lastPlayingPosition")
-        multiTypeAdapter.notifyItemChanged(nowPlayingPosition, TAG_PAYLOAD_BG)
-        multiTypeAdapter.notifyItemChanged(lastPlayingPosition, TAG_PAYLOAD_BG)
+    fun notifyPlayStatus() {
+        multiTypeAdapter.notifyItemRangeChanged(0, multiTypeAdapter.itemCount, PAYLOAD_REFRESH_PLAY_STATUS)
     }
 }

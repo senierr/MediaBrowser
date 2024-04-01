@@ -11,7 +11,7 @@ import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
 import com.github.chrisbanes.photoview.OnPhotoTapListener
 import com.senierr.adapter.internal.MultiTypeAdapter
 import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.onClick
+import com.senierr.base.support.ktx.onThrottleClick
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
 import com.senierr.media.databinding.ActivityImagePreviewBinding
@@ -21,12 +21,10 @@ import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalFile
 import com.senierr.media.repository.entity.LocalImage
 import com.senierr.media.utils.DiffUtils
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 /**
  * 图片预览页面
@@ -66,7 +64,7 @@ class ImagePreviewActivity : BaseActivity<ActivityImagePreviewBinding>() {
     }
 
     private fun initView() {
-        binding.layoutTopBar.btnBack.onClick { finish() }
+        binding.layoutTopBar.btnBack.onThrottleClick { finish() }
         hideControlBar(0)
 
         imagePreviewWrapper.onPhotoTapListener = OnPhotoTapListener { _, _, _ ->

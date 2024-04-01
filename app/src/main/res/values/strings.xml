@@ -5,4 +5,11 @@
     <string name="tab_audio">音乐</string>
     <string name="tab_video">视频</string>
 
+    <string name="play_mode_list">顺序播放</string>
+    <string name="play_mode_all">列表循环</string>
+    <string name="play_mode_one">单曲循环</string>
+    <string name="play_mode_shuffle">随机播放</string>
+
+    <string name="has_no_next">当前为最后一条</string>
+    <string name="has_no_previous">当前为第一条</string>
 </resources>

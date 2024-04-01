@@ -12,7 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.senierr.adapter.internal.MultiTypeAdapter
 import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.onClick
+import com.senierr.base.support.ktx.onThrottleClick
 import com.senierr.base.support.ktx.setGone
 import com.senierr.base.support.ui.BaseFragment
 import com.senierr.base.support.ui.recyclerview.GridItemDecoration
@@ -93,7 +93,7 @@ class VideoHomeFragment : BaseFragment<FragmentHomeVideoBinding>() {
         })
         requireActivity().onBackPressedDispatcher.addCallback(backPressedCallback)
 
-        binding?.layoutTopBar?.btnBack?.onClick {
+        binding?.layoutTopBar?.btnBack?.onThrottleClick {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 

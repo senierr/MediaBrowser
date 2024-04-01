@@ -6,7 +6,7 @@
     <color name="white">#FFFFFF</color>
     <!-- 主题色 -->
     <color name="app_theme">#1E79FF</color>
-    <color name="app_theme_light">#489DF8</color>
+    <color name="app_theme_light">#D7E9FB</color>
     <color name="app_theme_dark">#1E79FF</color>
     <color name="app_warn">#FA5555</color>
     <!-- 窗口背景色 -->

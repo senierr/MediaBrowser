@@ -4,7 +4,7 @@ import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.view.View
 import android.widget.EditText
-import com.senierr.base.util.OnThrottleClickListener
+import com.senierr.base.support.ui.listener.OnThrottleClickListener
 
 /**
  * View扩展函数
@@ -16,8 +16,8 @@ import com.senierr.base.util.OnThrottleClickListener
 /**
  * View设置防抖动点击事件
  */
-fun View.onClick(listener: (view: View) -> Unit) {
-    this.setOnClickListener(object : OnThrottleClickListener() {
+fun View.onThrottleClick(throttleInternal: Long = 300, listener: (view: View) -> Unit) {
+    this.setOnClickListener(object : OnThrottleClickListener(throttleInternal) {
         override fun onThrottleClick(view: View) {
             listener.invoke(view)
         }

@@ -20,7 +20,11 @@ object Utils {
         val h: String = if (hour < 10) "0$hour" else "$hour"
         val m: String = if (minute < 10) "0$minute" else "$minute"
         val s: String = if (second < 10) "0$second" else "$second"
-        return "$h:$m:$s"
+        if (hour == 0L) {
+            return "$m:$s"
+        } else {
+            return "$h:$m:$s"
+        }
     }
 
     /**

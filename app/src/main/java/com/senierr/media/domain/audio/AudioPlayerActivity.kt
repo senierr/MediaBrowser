@@ -3,31 +3,27 @@ package com.senierr.media.domain.audio
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.MediaItem
-import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
-import com.senierr.adapter.internal.MultiTypeAdapter
 import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.onClick
+import com.senierr.base.support.ktx.onThrottleClick
+import com.senierr.base.support.ktx.showToast
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
+import com.senierr.media.R
 import com.senierr.media.databinding.ActivityAudioPlayerBinding
+import com.senierr.media.domain.audio.dialog.PlayingListDialog
 import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
-import com.senierr.media.domain.audio.wrapper.PlayingListWrapper
+import com.senierr.media.domain.audio.viewmodel.BaseControlViewModel
 import com.senierr.media.domain.home.viewmodel.AudioViewModel
 import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalAudio
 import com.senierr.media.repository.entity.LocalFile
-import com.senierr.media.utils.DiffUtils
 import com.senierr.media.utils.Utils
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.isActive
 
 /**
  * 音乐播放页面
@@ -45,9 +41,6 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
         }
     }
 
-    private val multiTypeAdapter = MultiTypeAdapter()
-    private val playingListWrapper = PlayingListWrapper()
-
     // 进度条是否处于拖动状态
     private var isSeekBarDragging = false
 
@@ -62,41 +55,51 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
         super.onCreate(savedInstanceState)
         initView()
         initViewModel()
+        // 进入页面主动播放
+        val state = audioViewModel.localFiles.value
+        if (state is UIState.Content) {
+            val newList = state.value.filterIsInstance<LocalAudio>()
+            val localAudio: LocalAudio? = intent.getParcelableExtra("localAudio")
+            val startIndex = newList.indexOfFirst { it.id == localAudio?.id }
+            if (startIndex >= 0) {
+                controlViewModel.play(startIndex)
+            } else {
+                controlViewModel.play()
+            }
+        }
     }
 
     private fun initView() {
         // 返回按钮
-        binding.layoutTopBar.btnBack.onClick {
+        binding.layoutTopBar.btnBack.onThrottleClick {
             LogUtil.logD(TAG, "btnBack onClick")
             finish()
         }
         // 上一首
-        binding.btnPlayPrevious.onClick {
+        binding.btnPlayPrevious.onThrottleClick {
             LogUtil.logD(TAG, "btnPlayPrevious onClick")
-            controlViewModel.getMediaController()?.run {
-                if (hasPreviousMediaItem()) {
-                    seekToPreviousMediaItem()
-                }
+            if (controlViewModel.hasPreviousItem()) {
+                controlViewModel.skipToPrevious()
+            } else {
+                showToast(R.string.has_no_previous)
             }
         }
         // 播放/暂停
-        binding.btnPlayOrPause.onClick {
+        binding.btnPlayOrPause.onThrottleClick {
             LogUtil.logD(TAG, "btnPlayOrPause onClick")
-            controlViewModel.getMediaController()?.run {
-                if (isPlaying) {
-                    pause()
-                } else {
-                    play()
-                }
+            if (controlViewModel.isPlaying()) {
+                controlViewModel.pause(true)
+            } else {
+                controlViewModel.play()
             }
         }
         // 下一首
-        binding.btnPlayNext.onClick {
+        binding.btnPlayNext.onThrottleClick {
             LogUtil.logD(TAG, "btnPlayNext onClick")
-            controlViewModel.getMediaController()?.run {
-                if (hasNextMediaItem()) {
-                    seekToNextMediaItem()
-                }
+            if (controlViewModel.hasNextItem()) {
+                controlViewModel.skipToNext()
+            } else {
+                showToast(R.string.has_no_next)
             }
         }
         // 进度条
@@ -109,25 +112,40 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
 
             override fun onStopTrackingTouch(p0: SeekBar?) {
                 isSeekBarDragging = false
-                controlViewModel.getMediaController()?.run {
-                    seekTo(binding.sbSeek.progress.toLong())
-                }
+                controlViewModel.seekTo(binding.sbSeek.progress.toLong())
             }
         })
+        // 播放模式
+        binding.btnPlayMode.onThrottleClick {
+            LogUtil.logD(TAG, "btnPlayMode onClick")
+            val newPlayMode = when (controlViewModel.playMode.value) {
+                BaseControlViewModel.PlayMode.ONE -> {
+                    showToast(R.string.play_mode_list)
+                    BaseControlViewModel.PlayMode.LIST
+                }
+                BaseControlViewModel.PlayMode.LIST -> {
+                    showToast(R.string.play_mode_all)
+                    BaseControlViewModel.PlayMode.ALL
+                }
+                BaseControlViewModel.PlayMode.ALL -> {
+                    showToast(R.string.play_mode_shuffle)
+                    BaseControlViewModel.PlayMode.SHUFFLE
+                }
+                BaseControlViewModel.PlayMode.SHUFFLE -> {
+                    showToast(R.string.play_mode_one)
+                    BaseControlViewModel.PlayMode.ONE
+                }
+            }
+            controlViewModel.setPlayMode(newPlayMode)
+        }
         // 播放列表
-        binding.btnPlayingList.onClick {
-            showPlayingList()
+        binding.btnPlayingList.onThrottleClick {
+            LogUtil.logD(TAG, "showPlayingList")
+            val playingListDialog = PlayingListDialog { position, _ ->
+                controlViewModel.play(position)
+            }
+            playingListDialog.showNow(supportFragmentManager, "playingListDialog")
         }
-        binding.btnClose.onClick { hidePlayingList() }
-        binding.llPlayingList.onClick { hidePlayingList() }
-
-        binding.rvPlayingList.layoutManager = LinearLayoutManager(this)
-        playingListWrapper.setOnItemClickListener { _, _, item ->
-            LogUtil.logD(TAG, "playingListWrapper onClick: $item")
-
-        }
-        multiTypeAdapter.register(playingListWrapper)
-        binding.rvPlayingList.adapter = multiTypeAdapter
     }
 
     private fun initViewModel() {
@@ -143,6 +161,9 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
         controlViewModel.progress
             .onEach { notifyProgress(it) }
             .launchIn(lifecycleScope)
+        controlViewModel.playMode
+            .onEach { notifyPlayMode(it) }
+            .launchIn(lifecycleScope)
     }
 
     /**
@@ -151,39 +172,6 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     private fun notifyLocalFilesChanged(state: UIState<List<LocalFile>>) {
         LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
         when (state) {
-            is UIState.Content -> {
-                lifecycleScope.launchSingle("notifyLocalFilesChanged") {
-                    val oldList = multiTypeAdapter.data.filterIsInstance<LocalAudio>()
-                    val newList = state.value.filterIsInstance<LocalAudio>()
-                    val diffResult = DiffUtils.diffLocalFile(oldList, newList)
-                    if (isActive) {
-                        // 更新播放列表
-                        diffResult.dispatchUpdatesTo(multiTypeAdapter)
-                        multiTypeAdapter.data.clear()
-                        multiTypeAdapter.data.addAll(newList)
-                        // 更新队列
-                        val localAudio: LocalAudio? = intent.getParcelableExtra("localAudio")
-                        val startIndex = newList.indexOfFirst { it.id == localAudio?.id }
-                        controlViewModel.getMediaController()?.run {
-                            clearMediaItems()
-                            val mediaItems = newList.map { audio ->
-                                MediaItem.Builder()
-                                    .setUri(audio.getUri())
-                                    .setTag(audio)
-                                    .build()
-                            }
-                            if (startIndex == -1) {
-                                setMediaItems(mediaItems)
-                            } else {
-                                setMediaItems(mediaItems, startIndex, 0)
-                            }
-                            playWhenReady = true
-                            prepare()
-                        }
-                        Log.d(TAG, "notifyLocalFilesChanged: ${oldList.size} -> ${newList.size}")
-                    }
-                }
-            }
             is UIState.Error -> { finish() }
             else -> {}
         }
@@ -192,13 +180,10 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     /**
      * 更新播放项
      */
-    private fun notifyPlayingItem(playingItem: MediaItem?) {
+    private fun notifyPlayingItem(playingItem: LocalAudio?) {
         LogUtil.logD(TAG, "notifyPlayingItem: $playingItem")
-        val localAudio = playingItem?.localConfiguration?.tag
-        if (localAudio is LocalAudio) {
-            binding.layoutTopBar.tvTitle.text = localAudio.displayName
-            binding.ivCover.load(localAudio)
-        }
+        binding.layoutTopBar.tvTitle.text = playingItem?.displayName
+        binding.ivCover.load(playingItem)
     }
 
     /**
@@ -212,8 +197,8 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     /**
      * 更新底部播放进度
      */
-    private fun notifyProgress(progress: AudioControlViewModel.Progress) {
-        LogUtil.logD(TAG, "notifyProgress: ${progress.position} / ${progress.duration}, $isSeekBarDragging")
+    private fun notifyProgress(progress: BaseControlViewModel.Progress) {
+//        LogUtil.logD(TAG, "notifyProgress: ${progress.position} / ${progress.duration}, $isSeekBarDragging")
         if (progress.position < 0 || progress.duration <= 0) return
         if (isSeekBarDragging) return
         binding.sbSeek.max = progress.duration.toInt()
@@ -223,18 +208,23 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     }
 
     /**
-     * 显示播放列表
+     * 更新播放模式
      */
-    private fun showPlayingList() {
-        LogUtil.logD(TAG, "showPlayingList")
-        binding.llPlayingList.visibility = View.VISIBLE
-    }
-
-    /**
-     * 隐藏播放列表
-     */
-    private fun hidePlayingList() {
-        LogUtil.logD(TAG, "hidePlayingList")
-        binding.llPlayingList.visibility = View.GONE
+    private fun notifyPlayMode(playMode: BaseControlViewModel.PlayMode) {
+        LogUtil.logD(TAG, "notifyPlayMode: $playMode")
+        when (controlViewModel.playMode.value) {
+            BaseControlViewModel.PlayMode.ONE -> {
+                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_one)
+            }
+            BaseControlViewModel.PlayMode.LIST -> {
+                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_list)
+            }
+            BaseControlViewModel.PlayMode.ALL -> {
+                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_all)
+            }
+            BaseControlViewModel.PlayMode.SHUFFLE -> {
+                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_shuffle)
+            }
+        }
     }
 }

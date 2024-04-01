@@ -10,7 +10,7 @@ import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.senierr.adapter.internal.MultiTypeAdapter
-import com.senierr.base.support.ktx.onClick
+import com.senierr.base.support.ktx.onThrottleClick
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
 import com.senierr.media.databinding.ActivityVideoPlayerBinding
@@ -143,17 +143,17 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     @SuppressLint("ClickableViewAccessibility")
     private fun initView() {
         // 返回按钮
-        binding.btnBack.onClick { onBackPressed() }
+        binding.btnBack.onThrottleClick { onBackPressed() }
         // 上一首
-        binding.btnPlayPrevious.onClick {
+        binding.btnPlayPrevious.onThrottleClick {
             showControlBar()
         }
         // 播放/暂停
-        binding.btnPlayOrPause.onClick {
+        binding.btnPlayOrPause.onThrottleClick {
             showControlBar()
         }
         // 下一首
-        binding.btnPlayNext.onClick {
+        binding.btnPlayNext.onThrottleClick {
             showControlBar()
         }
         // 进度条
@@ -175,7 +175,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             }
         })
         // 控制区域
-        binding.llControl.onClick {
+        binding.llControl.onThrottleClick {
             if (isControlBarShowed()) {
                 hideControlBar()
             } else {
@@ -183,12 +183,12 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             }
         }
         // 播放列表
-        binding.btnPlayingList.onClick {
+        binding.btnPlayingList.onThrottleClick {
             showPlayingList()
             hideControlBar()
         }
-        binding.btnClose.onClick { hidePlayingList() }
-        binding.llPlayingList.onClick { hidePlayingList() }
+        binding.btnClose.onThrottleClick { hidePlayingList() }
+        binding.llPlayingList.onThrottleClick { hidePlayingList() }
 
         binding.rvPlayingList.layoutManager = LinearLayoutManager(this)
 //        playingListWrapper.setOnItemClickListener { _, _, item -> startPlay(item) }

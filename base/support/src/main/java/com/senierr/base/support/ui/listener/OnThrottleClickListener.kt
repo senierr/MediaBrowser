@@ -1,4 +1,4 @@
-package com.senierr.base.util
+package com.senierr.base.support.ui.listener
 
 import android.view.View
 
@@ -8,7 +8,7 @@ import android.view.View
  * @author zhouchunjie
  * @date 2018/4/16
  */
-abstract class OnThrottleClickListener : View.OnClickListener {
+abstract class OnThrottleClickListener(private val throttleInternal: Long = 300) : View.OnClickListener {
 
     private var lastClickTime = 0L
     private var viewId = 0
@@ -17,7 +17,7 @@ abstract class OnThrottleClickListener : View.OnClickListener {
         if (v == null) return
         val currentTime = System.currentTimeMillis()
         val isSameView = v.id == viewId
-        val isFastClick = currentTime - lastClickTime < 300
+        val isFastClick = currentTime - lastClickTime < throttleInternal
         viewId = v.id
         lastClickTime = currentTime
         if (isFastClick && isSameView) return

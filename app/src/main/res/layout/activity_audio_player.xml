@@ -26,8 +26,16 @@
 
         <SeekBar
             android:id="@+id/sb_seek"
+            android:progressDrawable="@drawable/seekbar_progress"
+            android:thumb="@drawable/shape_seekbar_thumb"
+            android:thumbOffset="@dimen/dp_0"
             android:layout_toEndOf="@id/tv_position"
             android:layout_toStartOf="@id/tv_duration"
+            android:paddingStart="@dimen/dp_8"
+            android:paddingEnd="@dimen/dp_8"
+            android:minHeight="@dimen/dp_4"
+            android:maxHeight="@dimen/dp_4"
+            android:layout_centerVertical="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
@@ -61,7 +69,7 @@
             android:src="@drawable/ic_mode_repeat_all"
             android:layout_centerVertical="true"
             android:layout_marginStart="@dimen/dp_16"
-            android:padding="@dimen/dp_16"
+            android:padding="@dimen/dp_12"
             android:layout_width="@dimen/dp_56"
             android:layout_height="@dimen/dp_56"/>
 
@@ -71,7 +79,7 @@
             android:layout_toStartOf="@id/btn_play_or_pause"
             android:layout_centerVertical="true"
             android:layout_marginEnd="@dimen/dp_16"
-            android:padding="@dimen/dp_16"
+            android:padding="@dimen/dp_12"
             android:layout_width="@dimen/dp_56"
             android:layout_height="@dimen/dp_56"/>
 
@@ -89,7 +97,7 @@
             android:layout_toEndOf="@id/btn_play_or_pause"
             android:layout_centerVertical="true"
             android:layout_marginStart="@dimen/dp_16"
-            android:padding="@dimen/dp_16"
+            android:padding="@dimen/dp_12"
             android:layout_width="@dimen/dp_56"
             android:layout_height="@dimen/dp_56"/>
 
@@ -99,58 +107,8 @@
             android:layout_centerVertical="true"
             android:layout_alignParentEnd="true"
             android:layout_marginEnd="@dimen/dp_16"
-            android:padding="@dimen/dp_16"
+            android:padding="@dimen/dp_12"
             android:layout_width="@dimen/dp_56"
             android:layout_height="@dimen/dp_56"/>
     </RelativeLayout>
-
-    <LinearLayout
-        android:id="@+id/ll_playing_list"
-        android:background="@color/window_layer_black"
-        android:orientation="vertical"
-        android:clickable="true"
-        android:focusable="true"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:clickable="true"
-            android:focusable="true"
-            android:layout_width="@dimen/dp_400"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/dp_108"
-                android:gravity="center_vertical">
-
-                <ImageButton
-                    android:id="@+id/btn_close"
-                    style="@style/BaseMaterialButton"
-                    android:src="@drawable/ic_close"
-                    android:layout_marginStart="@dimen/dp_32"
-                    android:layout_width="@dimen/dp_72"
-                    android:layout_height="@dimen/dp_72"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/dp_8"
-                    android:layout_marginEnd="@dimen/dp_32"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:text="播放列表"
-                    android:textColor="@color/text_white"
-                    android:textSize="@dimen/sp_36" />
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_playing_list"
-                android:layout_width="@dimen/dp_400"
-                android:layout_height="match_parent"/>
-        </LinearLayout>
-    </LinearLayout>
 </RelativeLayout>
