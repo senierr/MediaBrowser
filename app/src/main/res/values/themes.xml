@@ -7,6 +7,13 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+    <style name="Theme.MediaBrowser.Black" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/app_theme</item>
+        <item name="colorPrimaryDark">@color/transparent</item>
+        <item name="colorAccent">@color/app_theme</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
     <style name="Theme.Fullscreen" parent="Theme.MediaBrowser">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>

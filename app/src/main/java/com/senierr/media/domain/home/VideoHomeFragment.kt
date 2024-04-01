@@ -98,7 +98,7 @@ class VideoHomeFragment : BaseFragment<FragmentHomeVideoBinding>() {
         }
 
         binding?.rvList?.layoutManager = GridLayoutManager(requireContext(), 4)
-        binding?.rvList?.addItemDecoration(GridItemDecoration(16))
+        binding?.rvList?.addItemDecoration(GridItemDecoration(8))
         binding?.rvList?.itemAnimator = null
         binding?.rvList?.setHasFixedSize(true)
 

@@ -1,8 +1,10 @@
 package com.senierr.media.domain.home.wrapper
 
 import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.senierr.adapter.internal.ViewHolder
 import com.senierr.adapter.internal.ViewHolderWrapper
+import com.senierr.base.util.ScreenUtil
 import com.senierr.media.R
 import com.senierr.media.databinding.ItemImageBinding
 import com.senierr.media.repository.entity.LocalImage

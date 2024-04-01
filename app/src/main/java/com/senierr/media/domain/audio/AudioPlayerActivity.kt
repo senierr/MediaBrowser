@@ -7,6 +7,8 @@ import android.view.LayoutInflater
 import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
 import coil.load
+import coil.transform.CircleCropTransformation
+import com.commit451.coiltransformations.BlurTransformation
 import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ktx.onThrottleClick
 import com.senierr.base.support.ktx.showToast
@@ -52,6 +54,7 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         initView()
         initViewModel()
@@ -183,7 +186,10 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     private fun notifyPlayingItem(playingItem: LocalAudio?) {
         LogUtil.logD(TAG, "notifyPlayingItem: $playingItem")
         binding.layoutTopBar.tvTitle.text = playingItem?.displayName
-        binding.ivCover.load(playingItem)
+        binding.ivCover.load(playingItem) {
+            transformations(CircleCropTransformation())
+            error(R.drawable.ic_album)
+        }
     }
 
     /**

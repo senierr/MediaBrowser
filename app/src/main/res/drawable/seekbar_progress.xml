@@ -4,8 +4,7 @@
         android:id="@android:id/background"
         android:gravity="center_vertical|fill_horizontal">
         <shape android:shape="rectangle">
-            <size android:height="@dimen/dp_4" />
-            <corners android:radius="@dimen/dp_2" />
+            <size android:height="@dimen/dp_1" />
             <solid android:color="@color/window_empty" />
         </shape>
     </item>
@@ -14,9 +13,8 @@
         android:gravity="center_vertical|fill_horizontal">
         <clip>
             <shape android:shape="rectangle">
-                <size android:height="@dimen/dp_4" />
-                <corners android:radius="@dimen/dp_2" />
-                <solid android:color="@color/window_theme" />
+                <size android:height="@dimen/dp_1" />
+                <solid android:color="@color/btn_black" />
             </shape>
         </clip>
     </item>
