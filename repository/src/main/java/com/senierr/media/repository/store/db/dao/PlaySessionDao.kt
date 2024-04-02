@@ -15,7 +15,7 @@ import com.senierr.media.repository.entity.PlaySession
 @Dao
 interface PlaySessionDao {
     @Query("SELECT * FROM PlaySession WHERE id = :id")
-    suspend fun get(id: String): PlaySession?
+    suspend fun get(id: Long): PlaySession?
 
     @Query("SELECT * FROM PlaySession")
     suspend fun getAll(): List<PlaySession>
@@ -27,7 +27,7 @@ interface PlaySessionDao {
     suspend fun insertAll(playSessions: List<PlaySession>)
 
     @Query("DELETE FROM PlaySession WHERE id = :id")
-    suspend fun deleteById(id: String)
+    suspend fun deleteById(id: Long)
 
     @Query("DELETE FROM PlaySession")
     suspend fun deleteAll()

@@ -2,8 +2,10 @@ package com.senierr.media.repository
 
 import android.app.Application
 import com.senierr.media.repository.service.api.IMediaService
+import com.senierr.media.repository.service.api.IPlayControlService
 import com.senierr.media.repository.store.db.DatabaseManager
 import com.senierr.media.repository.service.impl.MediaService
+import com.senierr.media.repository.service.impl.PlayControlService
 
 /**
  * U盘视频数据入口
@@ -37,6 +39,7 @@ object MediaRepository {
      */
     inline fun <reified T> getService(): T = when (T::class.java) {
         IMediaService::class.java -> MediaService(getApplication()) as T
+        IPlayControlService::class.java -> PlayControlService() as T
         else -> throw IllegalArgumentException("Can not find ${T::class.java.simpleName}!")
     }
 }

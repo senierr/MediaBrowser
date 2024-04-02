@@ -1,5 +1,7 @@
 package com.senierr.media.repository.service.api
 
+import com.senierr.media.repository.entity.PlaySession
+
 /**
  * 播控服务
  *
@@ -11,10 +13,10 @@ interface IPlayControlService {
     /**
      * 保存播放会话
      */
-    suspend fun savePlaySession()
+    suspend fun savePlaySession(playSession: PlaySession)
 
     /**
      * 获取播放会话
      */
-    suspend fun fetchPlaySession()
+    suspend fun fetchPlaySession(): PlaySession?
 }

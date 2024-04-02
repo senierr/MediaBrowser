@@ -1,6 +1,7 @@
 package com.senierr.media
 
 import android.app.Application
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModelStore
@@ -14,6 +15,7 @@ import coil.disk.DiskCache
 import coil.imageLoader
 import coil.memory.MemoryCache
 import com.senierr.base.util.LogUtil
+import com.senierr.media.domain.audio.service.AudioMediaBrowserService
 import com.senierr.media.repository.MediaRepository
 import com.senierr.media.utils.LocalAudioFetcher
 
@@ -42,6 +44,8 @@ class SessionApplication : Application(), ImageLoaderFactory, ViewModelStoreOwne
 
         LogUtil.isDebug = isDebug
         MediaRepository.initialize(application)
+
+        startForegroundService(Intent(this, AudioMediaBrowserService::class.java))
     }
 
     override val viewModelStore: ViewModelStore

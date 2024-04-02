@@ -106,13 +106,13 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
         val context = SessionApplication.getInstance()
         // 初始化音频焦点
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager?
-        // 初始化播放器
+        // 初始化播放器 TODO 总时长
         mediaController = ExoPlayer.Builder(context)
             .setAudioAttributes(AudioAttributes.DEFAULT, false)
             .build()
         mediaController.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                LogUtil.logD(TAG, "onMediaItemTransition: ${mediaItem?.mediaMetadata?.title}, $reason")
+                LogUtil.logD(TAG, "onMediaItemTransition: ${mediaItem?.mediaId} - ${mediaItem?.mediaMetadata?.title}, $reason")
                 viewModelScope.launchSingle("onMediaItemTransition") {
                     val item = playingList.value.find { onItemCovertToMediaItem(it).mediaId == mediaItem?.mediaId }
                     _playingItem.emit(item)
@@ -121,6 +121,13 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 LogUtil.logD(TAG, "onPlaybackStateChanged: $playbackState")
+                if (playbackState == Player.STATE_READY) {
+                    viewModelScope.launchSingle("initProgress") {
+                        val position = mediaController.currentPosition
+                        val duration = mediaController.duration
+                        _progress.emit(Progress(position, duration))
+                    }
+                }
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -136,7 +143,9 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
                     mediaController.playWhenReady = true
                     mediaController.prepare()
                 } else {
-                    _playError.tryEmit(error)
+                    viewModelScope.launchSingle("onPlayerError") {
+                        _playError.emit(error)
+                    }
                 }
             }
         })
@@ -160,19 +169,27 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 设置播放列表
      */
-    fun setMediaItems(items: List<T>) {
-        LogUtil.logD(TAG, "setMediaItems: ${items.size}")
+    fun setMediaItems(items: List<T>, startIndex: Int = -1, startPositionMs: Long = -1) {
+        LogUtil.logD(TAG, "setMediaItems: ${items.size}, $startIndex, $startPositionMs")
+        viewModelScope.launchSingle("setMediaItems") {
+            _playingList.emit(items)
+        }
         val newMediaItems = items.map { onItemCovertToMediaItem(it) }
         val index = newMediaItems.indexOfFirst { it.mediaId == mediaController.currentMediaItem?.mediaId }
-        if (index < 0) {
-            mediaController.setMediaItems(newMediaItems)
+        if (index < 0 || index != startIndex) {
+            if (startIndex >= 0) {
+                mediaController.setMediaItems(newMediaItems, startIndex, startPositionMs)
+            } else {
+                mediaController.setMediaItems(newMediaItems)
+            }
+            mediaController.playWhenReady = false
+            mediaController.prepare()
         } else {
             mediaController.removeMediaItems(0, mediaController.currentMediaItemIndex)
             mediaController.removeMediaItems(mediaController.currentMediaItemIndex + 1, mediaController.mediaItemCount)
             mediaController.addMediaItems(0, newMediaItems.subList(0, index))
             mediaController.addMediaItems(newMediaItems.subList(index + 1, newMediaItems.size))
         }
-        _playingList.tryEmit(items)
     }
 
     /**
@@ -324,17 +341,6 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
             }
         }
         _playMode.tryEmit(playMode)
-    }
-
-    /**
-     * 重置播放
-     */
-    fun reset() {
-        LogUtil.logD(TAG, "reset")
-        mediaController.clearMediaItems()
-        _playingItem.tryEmit(null)
-        _playStatus.tryEmit(false)
-        _progress.tryEmit(Progress(0, 100))
     }
 
     /**

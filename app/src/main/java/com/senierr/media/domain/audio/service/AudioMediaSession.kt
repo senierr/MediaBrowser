@@ -36,7 +36,7 @@ class AudioMediaSession(
 ) : MediaSessionCompat(context, tag), CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.Main) {
 
     companion object {
-        private const val TAG = "XmlyMediaSession"
+        private const val TAG = "AudioMediaSession"
 
         // 状态同步
         private const val ACTION_SYNC_STATUS = "com.pateo.sgmw.media.ACTION_SYNC_STATUS"
@@ -128,7 +128,7 @@ class AudioMediaSession(
         } else {
             val mediaMetadata: MediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, playingItem.displayName)
-//                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, mediaItem.mediaMetadata.artist.toString())
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, playingItem.artist)
                 .putString(MediaMetadataCompat.METADATA_KEY_ART_URI, playingItem.getUri().toString())
                 .build()
             setMetadata(mediaMetadata)

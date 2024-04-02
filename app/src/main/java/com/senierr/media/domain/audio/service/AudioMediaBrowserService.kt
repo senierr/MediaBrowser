@@ -16,10 +16,10 @@ import com.senierr.media.R
 class AudioMediaBrowserService : MediaBrowserServiceCompat() {
 
     companion object {
-        private const val TAG = "XmlyMediaBrowserService"
+        private const val TAG = "AudioMediaBrowserService"
         private const val MC_RECENT_ROOT = "__RECENT__"
         private const val CHANNEL_ID = "100"
-        private const val CHANNEL_NAME = "XmlyMediaBrowserService"
+        private const val CHANNEL_NAME = "AudioMediaBrowserService"
     }
 
     private var mediaSession: AudioMediaSession? = null

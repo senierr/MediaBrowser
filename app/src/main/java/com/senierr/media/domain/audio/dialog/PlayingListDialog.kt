@@ -1,5 +1,6 @@
 package com.senierr.media.domain.audio.dialog
 
+import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -7,10 +8,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.senierr.adapter.internal.MultiTypeAdapter
 import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ui.BaseBottomDialogFragment
 import com.senierr.base.util.LogUtil
+import com.senierr.base.util.ScreenUtil
 import com.senierr.media.databinding.DialogPlayingListBinding
 import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
 import com.senierr.media.domain.audio.wrapper.PlayingListWrapper
@@ -20,6 +23,7 @@ import com.senierr.media.utils.DiffUtils
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
+
 
 /**
  * 播放列表弹出框
@@ -38,6 +42,13 @@ class PlayingListDialog(
 
     override fun createViewBinding(inflater: LayoutInflater, container: ViewGroup?): DialogPlayingListBinding {
         return DialogPlayingListBinding.inflate(inflater, container, false)
+    }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+        dialog.behavior.peekHeight = (ScreenUtil.getScreenHeight(requireContext()) * 0.8).toInt()
+        dialog.behavior.maxHeight = dialog.behavior.peekHeight
+        return dialog
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

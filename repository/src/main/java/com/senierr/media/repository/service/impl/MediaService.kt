@@ -216,7 +216,7 @@ class MediaService(private val context: Context) : IMediaService {
                             id, data, displayName, data.substringBeforeLast(File.separatorChar), mimeType
                         )
                         result.add(localImage)
-                        Log.d(TAG, "Add image: $localImage")
+//                        Log.d(TAG, "Add image: $localImage")
                     } else {
                         Log.w(TAG, "Add image error: $id, $displayName, $data, $mimeType")
                     }
@@ -234,6 +234,7 @@ class MediaService(private val context: Context) : IMediaService {
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.DISPLAY_NAME,
                 MediaStore.Audio.Media.DATA,
+                MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.MIME_TYPE
             )
             val selection = if (includeSubfolder) {
@@ -252,19 +253,21 @@ class MediaService(private val context: Context) : IMediaService {
                 val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
                 val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
                 val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                 val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
                 while (isActive && cursor.moveToNext()) {
                     val id = cursor.getLong(idColumn)
                     val displayName = cursor.getString(displayNameColumn)
                     val data = cursor.getString(dataColumn)
+                    val artist = cursor.getString(artistColumn)
                     val mimeType = cursor.getString(mimeTypeColumn)
 
                     if (displayName.isNotEmpty() && data.isNotEmpty() && mimeType.isNotEmpty()) {
                         val localAudio = LocalAudio(
-                            id, data, displayName, data.substringBeforeLast(File.separatorChar), mimeType
+                            id, data, displayName, data.substringBeforeLast(File.separatorChar), mimeType, artist
                         )
                         result.add(localAudio)
-                        Log.d(TAG, "Add audio: $localAudio")
+//                        Log.d(TAG, "Add audio: $localAudio")
                     } else {
                         Log.w(TAG, "Add audio error: $id, $displayName, $data, $mimeType")
                     }
@@ -282,6 +285,7 @@ class MediaService(private val context: Context) : IMediaService {
                 MediaStore.Video.Media._ID,
                 MediaStore.Video.Media.DISPLAY_NAME,
                 MediaStore.Video.Media.DATA,
+                MediaStore.Video.Media.ARTIST,
                 MediaStore.Video.Media.MIME_TYPE
             )
             val selection = if (includeSubfolder) {
@@ -300,19 +304,21 @@ class MediaService(private val context: Context) : IMediaService {
                 val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
                 val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
                 val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+                val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.ARTIST)
                 val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
                 while (isActive && cursor.moveToNext()) {
                     val id = cursor.getLong(idColumn)
                     val displayName = cursor.getString(displayNameColumn)
                     val data = cursor.getString(dataColumn)
+                    val artist = cursor.getString(artistColumn)
                     val mimeType = cursor.getString(mimeTypeColumn)
 
                     if (displayName.isNotEmpty() && data.isNotEmpty() && mimeType.isNotEmpty()) {
                         val localVideo = LocalVideo(
-                            id, data, displayName, data.substringBeforeLast(File.separatorChar), mimeType
+                            id, data, displayName, data.substringBeforeLast(File.separatorChar), mimeType, artist
                         )
                         result.add(localVideo)
-                        Log.d(TAG, "Add video: $localVideo")
+//                        Log.d(TAG, "Add video: $localVideo")
                     } else {
                         Log.w(TAG, "Add video error: $id, $displayName, $data, $mimeType")
                     }
