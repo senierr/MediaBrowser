@@ -8,7 +8,6 @@ import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import coil.transform.CircleCropTransformation
-import com.commit451.coiltransformations.BlurTransformation
 import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ktx.onThrottleClick
 import com.senierr.base.support.ktx.showToast
@@ -19,10 +18,8 @@ import com.senierr.media.databinding.ActivityAudioPlayerBinding
 import com.senierr.media.domain.audio.dialog.PlayingListDialog
 import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
 import com.senierr.media.domain.audio.viewmodel.BaseControlViewModel
-import com.senierr.media.domain.home.viewmodel.AudioViewModel
 import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalAudio
-import com.senierr.media.repository.entity.LocalFile
 import com.senierr.media.utils.Utils
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -36,40 +33,32 @@ import kotlinx.coroutines.flow.onEach
 class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
 
     companion object {
-        fun start(context: Context, localAudio: LocalAudio) {
+        fun start(context: Context, bucketPath: String, localAudioId: Long? = null) {
             context.startActivity(Intent(context, AudioPlayerActivity::class.java).apply {
-                putExtra("localAudio", localAudio)
+                putExtra("bucketPath", bucketPath)
+                putExtra("localAudioId", localAudioId)
             })
         }
     }
 
+    private val controlViewModel: AudioControlViewModel by applicationViewModel()
+
     // 进度条是否处于拖动状态
     private var isSeekBarDragging = false
-
-    private val audioViewModel: AudioViewModel by applicationViewModel()
-    private val controlViewModel: AudioControlViewModel by applicationViewModel()
+    // 是否需要自动播放
+    private var ifNeedAutoPlay = true
 
     override fun createViewBinding(layoutInflater: LayoutInflater): ActivityAudioPlayerBinding {
         return ActivityAudioPlayerBinding.inflate(layoutInflater)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         initView()
         initViewModel()
-        // 进入页面主动播放
-        val state = audioViewModel.localFiles.value
-        if (state is UIState.Content) {
-            val newList = state.value.filterIsInstance<LocalAudio>()
-            val localAudio: LocalAudio? = intent.getParcelableExtra("localAudio")
-            val startIndex = newList.indexOfFirst { it.id == localAudio?.id }
-            if (startIndex >= 0) {
-                controlViewModel.play(startIndex)
-            } else {
-                controlViewModel.play()
-            }
-        }
+        // 重新加载数据，防止数据变更
+        val bucketPath: String? = intent.getStringExtra("bucketPath")
+        bucketPath?.let { controlViewModel.fetchLocalAudios(it) }
     }
 
     private fun initView() {
@@ -152,29 +141,50 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     }
 
     private fun initViewModel() {
-        audioViewModel.localFiles
+        controlViewModel.localAudios
             .onEach { notifyLocalFilesChanged(it) }
             .launchIn(lifecycleScope)
         controlViewModel.playingItem
-            .onEach { notifyPlayingItem(it) }
+            .onEach { notifyPlayingItemChanged(it) }
             .launchIn(lifecycleScope)
         controlViewModel.playStatus
-            .onEach { notifyPlayStatus(it) }
+            .onEach { notifyPlayStatusChanged(it) }
             .launchIn(lifecycleScope)
         controlViewModel.progress
-            .onEach { notifyProgress(it) }
+            .onEach { notifyProgressChanged(it) }
             .launchIn(lifecycleScope)
         controlViewModel.playMode
-            .onEach { notifyPlayMode(it) }
+            .onEach { notifyPlayModeChanged(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.playError
+            .onEach { notifyPlayErrorChanged(it) }
             .launchIn(lifecycleScope)
     }
 
     /**
      * 更新页面数据
      */
-    private fun notifyLocalFilesChanged(state: UIState<List<LocalFile>>) {
+    private fun notifyLocalFilesChanged(state: UIState<List<LocalAudio>>) {
         LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
         when (state) {
+            is UIState.Content -> {
+                if (ifNeedAutoPlay) {
+                    val localAudioId = intent.getLongExtra("localAudioId", 0)
+                    if (localAudioId > 0) {
+                        // 自动播放指定音频
+                        val position = state.value.indexOfFirst { it.id == localAudioId }
+                        if (position >= 0) {
+                            controlViewModel.play(position)
+                        } else {
+                            // 没有查询到，不播放
+                        }
+                    } else {
+                        // 没有指定音频，播放列表第一首
+                        controlViewModel.play(0)
+                    }
+                    ifNeedAutoPlay = false
+                }
+            }
             is UIState.Error -> { finish() }
             else -> {}
         }
@@ -183,8 +193,8 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     /**
      * 更新播放项
      */
-    private fun notifyPlayingItem(playingItem: LocalAudio?) {
-        LogUtil.logD(TAG, "notifyPlayingItem: $playingItem")
+    private fun notifyPlayingItemChanged(playingItem: LocalAudio?) {
+        LogUtil.logD(TAG, "notifyPlayingItemChanged: $playingItem")
         binding.layoutTopBar.tvTitle.text = playingItem?.displayName
         binding.ivCover.load(playingItem) {
             transformations(CircleCropTransformation())
@@ -195,15 +205,15 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     /**
      * 更新播放状态
      */
-    private fun notifyPlayStatus(isPlaying: Boolean) {
-        LogUtil.logD(TAG, "notifyPlayStatus: $isPlaying")
+    private fun notifyPlayStatusChanged(isPlaying: Boolean) {
+        LogUtil.logD(TAG, "notifyPlayStatusChanged: $isPlaying")
         binding.btnPlayOrPause.isSelected = isPlaying
     }
 
     /**
      * 更新底部播放进度
      */
-    private fun notifyProgress(progress: BaseControlViewModel.Progress) {
+    private fun notifyProgressChanged(progress: BaseControlViewModel.Progress) {
 //        LogUtil.logD(TAG, "notifyProgress: ${progress.position} / ${progress.duration}, $isSeekBarDragging")
         if (progress.position < 0 || progress.duration <= 0) return
         if (isSeekBarDragging) return
@@ -216,8 +226,8 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
     /**
      * 更新播放模式
      */
-    private fun notifyPlayMode(playMode: BaseControlViewModel.PlayMode) {
-        LogUtil.logD(TAG, "notifyPlayMode: $playMode")
+    private fun notifyPlayModeChanged(playMode: BaseControlViewModel.PlayMode) {
+        LogUtil.logD(TAG, "notifyPlayModeChanged: $playMode")
         when (controlViewModel.playMode.value) {
             BaseControlViewModel.PlayMode.ONE -> {
                 binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_one)
@@ -232,5 +242,13 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
                 binding.btnPlayMode.setImageResource(R.drawable.ic_mode_shuffle)
             }
         }
+    }
+
+    /**
+     * 更新播放异常
+     */
+    private fun notifyPlayErrorChanged(playError: Throwable) {
+        LogUtil.logD(TAG, "notifyPlayErrorChanged: $playError")
+        showToast(R.string.play_error)
     }
 }

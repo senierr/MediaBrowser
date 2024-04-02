@@ -12,4 +12,6 @@
 
     <string name="has_no_next">当前为最后一条</string>
     <string name="has_no_previous">当前为第一条</string>
+
+    <string name="play_error">播放异常</string>
 </resources>

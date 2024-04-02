@@ -110,7 +110,7 @@ class AudioHomeFragment : BaseFragment<FragmentHomeAudioBinding>() {
         }
         audioWrapper.setOnItemClickListener { _, _, item ->
             LogUtil.logD(TAG, "audio onClick: $item")
-            AudioPlayerActivity.start(requireContext(), item)
+            AudioPlayerActivity.start(requireContext(), audioViewModel.currentFolder.value, item.id)
         }
 
         multiTypeAdapter.register(folderWrapper)

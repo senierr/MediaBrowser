@@ -5,6 +5,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.senierr.adapter.internal.ViewHolder
 import com.senierr.adapter.internal.ViewHolderWrapper
+import com.senierr.base.support.ktx.setGone
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
 import com.senierr.media.databinding.ItemAudioPlayingListBinding
@@ -51,14 +52,30 @@ class PlayingListWrapper : ViewHolderWrapper<LocalAudio>(R.layout.item_audio_pla
         if (payloads.contains(PAYLOAD_REFRESH_PLAY_STATUS)) {
             if (holder.layoutPosition == controlViewModel.currentMediaItemIndex()) {
                 binding.root.setBackgroundResource(R.color.app_theme_light)
+                binding.tvIndex.setGone(true)
+                binding.ivPlayingIcon.setGone(false)
+                binding.ivPlayingIcon.setMusicPlaying(true)
+                binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_theme))
             } else {
                 binding.root.setBackgroundResource(R.color.transparent)
+                binding.tvIndex.setGone(false)
+                binding.ivPlayingIcon.setMusicPlaying(false)
+                binding.ivPlayingIcon.setGone(true)
+                binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_title))
             }
         } else {
             if (holder.layoutPosition == controlViewModel.currentMediaItemIndex()) {
                 binding.root.setBackgroundResource(R.color.app_theme_light)
+                binding.tvIndex.setGone(true)
+                binding.ivPlayingIcon.setGone(false)
+                binding.ivPlayingIcon.setMusicPlaying(true)
+                binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_theme))
             } else {
                 binding.root.setBackgroundResource(R.color.transparent)
+                binding.tvIndex.setGone(false)
+                binding.ivPlayingIcon.setMusicPlaying(false)
+                binding.ivPlayingIcon.setGone(true)
+                binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_title))
             }
             binding.tvIndex.text = "${holder.layoutPosition}"
             binding.tvDisplayName.text = item.displayName
@@ -68,7 +85,7 @@ class PlayingListWrapper : ViewHolderWrapper<LocalAudio>(R.layout.item_audio_pla
     /**
      * 刷新播放状态
      */
-    fun notifyPlayStatus() {
+    private fun notifyPlayStatus() {
         multiTypeAdapter.notifyItemRangeChanged(0, multiTypeAdapter.itemCount, PAYLOAD_REFRESH_PLAY_STATUS)
     }
 }

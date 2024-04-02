@@ -3,17 +3,31 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="@dimen/dp_56"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/tv_index"
-        tools:text="19"
-        android:textSize="@dimen/sp_14"
-        android:textColor="@color/text_title"
-        android:gravity="center"
+    <FrameLayout
         android:layout_width="@dimen/dp_48"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tv_index"
+            tools:text="19"
+            android:textSize="@dimen/sp_14"
+            android:textColor="@color/text_title"
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <com.senierr.base.widget.PlayingIcon
+            android:id="@+id/iv_playing_icon"
+            android:layout_gravity="center"
+            android:layout_width="@dimen/dp_18"
+            android:layout_height="@dimen/dp_18"
+            app:pointerColor="@color/app_theme"
+            app:pointerWidth="@dimen/dp_3" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/tv_display_name"

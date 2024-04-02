@@ -12,11 +12,10 @@ import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ui.BaseBottomDialogFragment
 import com.senierr.base.util.LogUtil
 import com.senierr.media.databinding.DialogPlayingListBinding
+import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
 import com.senierr.media.domain.audio.wrapper.PlayingListWrapper
-import com.senierr.media.domain.home.viewmodel.AudioViewModel
 import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalAudio
-import com.senierr.media.repository.entity.LocalFile
 import com.senierr.media.utils.DiffUtils
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -35,7 +34,7 @@ class PlayingListDialog(
     private val multiTypeAdapter = MultiTypeAdapter()
     private val playingListWrapper = PlayingListWrapper()
 
-    private val audioViewModel: AudioViewModel by applicationViewModel()
+    private val controlViewModel: AudioControlViewModel by applicationViewModel()
 
     override fun createViewBinding(inflater: LayoutInflater, container: ViewGroup?): DialogPlayingListBinding {
         return DialogPlayingListBinding.inflate(inflater, container, false)
@@ -59,7 +58,7 @@ class PlayingListDialog(
     }
 
     private fun initViewModel() {
-        audioViewModel.localFiles
+        controlViewModel.localAudios
             .onEach { notifyLocalFilesChanged(it) }
             .launchIn(lifecycleScope)
     }
@@ -67,13 +66,13 @@ class PlayingListDialog(
     /**
      * 更新页面数据
      */
-    private fun notifyLocalFilesChanged(state: UIState<List<LocalFile>>) {
+    private fun notifyLocalFilesChanged(state: UIState<List<LocalAudio>>) {
         LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
         when (state) {
             is UIState.Content -> {
                 lifecycleScope.launchSingle("notifyLocalFilesChanged") {
                     val oldList = multiTypeAdapter.data.filterIsInstance<LocalAudio>()
-                    val newList = state.value.filterIsInstance<LocalAudio>()
+                    val newList = state.value
                     val diffResult = DiffUtils.diffLocalFile(oldList, newList)
                     if (isActive) {
                         // 更新播放列表

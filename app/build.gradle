@@ -57,6 +57,6 @@ dependencies {
     implementation libs.coil.video
     implementation libs.multitype
     implementation libs.photoView
+    implementation libs.androidx.media
     implementation libs.androidx.media3.exoplayer
-    implementation libs.androidx.media3.session
 }
