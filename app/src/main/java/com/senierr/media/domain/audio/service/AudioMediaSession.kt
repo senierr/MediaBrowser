@@ -37,20 +37,6 @@ class AudioMediaSession(
 
     companion object {
         private const val TAG = "AudioMediaSession"
-
-        // 状态同步
-        private const val ACTION_SYNC_STATUS = "com.pateo.sgmw.media.ACTION_SYNC_STATUS"
-        // 收藏
-        private const val ACTION_FAVORITE = "com.pateo.sgmw.media.ACTION_FAVORITE"
-
-        // 进度
-        private const val EVENT_PROGRESS = "com.pateo.sgmw.media.EVENT_PROGRESS"
-        // 收藏状态
-        private const val EVENT_FAVORITE = "com.pateo.sgmw.media.EVENT_FAVORITE"
-
-        private const val KEY_POSITION = "POSITION"
-        private const val KEY_DURATION = "DURATION"
-        private const val KEY_IS_FAVORITE = "IS_FAVORITE"
     }
 
     private val controlViewModel: AudioControlViewModel by applicationViewModel()
@@ -153,7 +139,7 @@ class AudioMediaSession(
                         or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
                         or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
             )
-            .setState(state, 0, 1.0f)
+            .setState(state, controlViewModel.progress.value.position, 1.0f)
             .build()
         setPlaybackState(playbackState)
     }
@@ -162,13 +148,33 @@ class AudioMediaSession(
      * 播放进度变更
      */
     private fun notifyProgressChanged(progress: BaseControlViewModel.Progress) {
-        sendSessionEvent(
-            EVENT_PROGRESS,
-            Bundle().apply {
-                putLong(KEY_POSITION, progress.position)
-                putLong(KEY_DURATION, progress.duration)
-            }
-        )
+        val playingItem = controlViewModel.playingItem.value?: return
+        // 更新总时长
+        val mediaMetadata: MediaMetadataCompat = MediaMetadataCompat.Builder()
+            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, playingItem.id.toString())
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, playingItem.displayName)
+            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, playingItem.artist)
+            .putString(MediaMetadataCompat.METADATA_KEY_ART_URI, playingItem.path)
+            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, progress.duration)
+            .build()
+        setMetadata(mediaMetadata)
+        // 更新进度
+        val state = if (controlViewModel.isPlaying()) {
+            PlaybackStateCompat.STATE_PLAYING
+        } else {
+            PlaybackStateCompat.STATE_PAUSED
+        }
+        val playbackState = PlaybackStateCompat.Builder()
+            .setActions(
+                PlaybackStateCompat.ACTION_PLAY
+                        or PlaybackStateCompat.ACTION_PAUSE
+                        or PlaybackStateCompat.ACTION_PLAY_PAUSE
+                        or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                        or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+            )
+            .setState(state, progress.position, 1.0f)
+            .build()
+        setPlaybackState(playbackState)
     }
 
     /**
@@ -176,26 +182,23 @@ class AudioMediaSession(
      */
     private fun notifyPlayModeChanged(playMode: BaseControlViewModel.PlayMode) {
         LogUtil.logD(TAG, "notifyPlayModeChanged: $playMode")
-//        sendSessionEvent(
-//            EVENT_FAVORITE,
-//            Bundle().apply {
-//                putBoolean(KEY_IS_FAVORITE, isFavorite)
-//            }
-//        )
-//
-//        when (controlViewModel.playMode.value) {
-//            BaseControlViewModel.PlayMode.ONE -> {
-//                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_one)
-//            }
-//            BaseControlViewModel.PlayMode.LIST -> {
-//                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_list)
-//            }
-//            BaseControlViewModel.PlayMode.ALL -> {
-//                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_all)
-//            }
-//            BaseControlViewModel.PlayMode.SHUFFLE -> {
-//                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_shuffle)
-//            }
-//        }
+        when (playMode) {
+            BaseControlViewModel.PlayMode.ONE -> {
+                setRepeatMode(PlaybackStateCompat.REPEAT_MODE_ONE)
+                setShuffleMode(PlaybackStateCompat.SHUFFLE_MODE_NONE)
+            }
+            BaseControlViewModel.PlayMode.LIST -> {
+                setRepeatMode(PlaybackStateCompat.REPEAT_MODE_NONE)
+                setShuffleMode(PlaybackStateCompat.SHUFFLE_MODE_NONE)
+            }
+            BaseControlViewModel.PlayMode.ALL -> {
+                setRepeatMode(PlaybackStateCompat.REPEAT_MODE_ALL)
+                setShuffleMode(PlaybackStateCompat.SHUFFLE_MODE_NONE)
+            }
+            BaseControlViewModel.PlayMode.SHUFFLE -> {
+                setRepeatMode(PlaybackStateCompat.REPEAT_MODE_ALL)
+                setShuffleMode(PlaybackStateCompat.SHUFFLE_MODE_ALL)
+            }
+        }
     }
 }

@@ -12,7 +12,7 @@
     <!-- 窗口背景色 -->
     <color name="window_theme">@color/app_theme</color>
     <color name="window_content">#FFFFFF</color>
-    <color name="window_empty">#F0F5FB</color>
+    <color name="window_empty">#F5F5F5</color>
     <color name="window_black">#000000</color>
     <color name="window_layer_black">#33000000</color>
     <!-- 分割线色 -->

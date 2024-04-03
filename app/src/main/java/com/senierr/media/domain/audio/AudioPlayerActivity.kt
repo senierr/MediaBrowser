@@ -34,6 +34,10 @@ import kotlinx.coroutines.launch
 class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
 
     companion object {
+        fun start(context: Context) {
+            context.startActivity(Intent(context, AudioPlayerActivity::class.java))
+        }
+
         fun start(context: Context, bucketPath: String, localAudio: LocalAudio? = null) {
             context.startActivity(Intent(context, AudioPlayerActivity::class.java).apply {
                 putExtra("bucketPath", bucketPath)
@@ -55,11 +59,13 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
         super.onCreate(savedInstanceState)
         initView()
         initViewModel()
-
-        lifecycleScope.launch {
-            val bucketPath: String? = intent.getStringExtra("bucketPath")
-            val localAudio = intent.getParcelableExtra<LocalAudio>("localAudio")
-            bucketPath?.let { controlViewModel.autoPlay(it, localAudio) }
+        // 主动播放
+        val bucketPath: String? = intent.getStringExtra("bucketPath")
+        val localAudio = intent.getParcelableExtra<LocalAudio>("localAudio")
+        if (bucketPath.isNullOrBlank()) {
+            controlViewModel.autoPlay()
+        } else {
+            controlViewModel.play(bucketPath, localAudio)
         }
     }
 
@@ -199,7 +205,7 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
      */
     private fun notifyProgressChanged(progress: BaseControlViewModel.Progress) {
 //        LogUtil.logD(TAG, "notifyProgressChanged: ${progress.position} / ${progress.duration}, $isSeekBarDragging")
-        if (progress.position < 0 || progress.duration <= 0) return
+        if (progress.position < 0 || progress.duration < 0) return
         if (isSeekBarDragging) return
         binding.sbSeek.max = progress.duration.toInt()
         binding.sbSeek.progress = progress.position.toInt()

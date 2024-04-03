@@ -10,6 +10,11 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
+    <queries>
+        <!-- Android 11以上，申请软件包可见性。否则，无法链接到对应的媒体服务。 -->
+        <package android:name="com.senierr.media.Browser"/>
+    </queries>
+
     <application
         android:name=".SessionApplication"
         android:icon="@mipmap/ic_launcher"
@@ -32,7 +37,8 @@
             android:theme="@style/Theme.Fullscreen.Black"/>
 
         <activity
-            android:name=".domain.audio.AudioPlayerActivity"/>
+            android:name=".domain.audio.AudioPlayerActivity"
+            android:launchMode="singleTask"/>
 
         <activity
             android:name="com.senierr.media.domain.video.VideoPlayerActivity"

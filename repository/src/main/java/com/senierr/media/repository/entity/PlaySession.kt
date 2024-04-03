@@ -12,17 +12,17 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "PlaySession")
 data class PlaySession(
     @PrimaryKey
-    var id: Long,
-    var path: String,           // 路径
-    var mediaType: Int,         // 媒体类型 1：音频；2：视频
-    var isPlaying: Boolean,     // 是否正在播放
-    var position: Long,         // 播放进度
-    var duration: Long,         // 总时长
-    var timestamp: Long         // 开始播放时间戳
+    var id: Long = 0,
+    var path: String = "",                              // 路径
+    var bucketPath: String = "",                        // 文件夹路径
+    var mediaType: Int = 0,                             // 媒体类型 1：音频；2：视频
+    var isPlaying: Boolean = false,                     // 是否正在播放
+    var position: Long = 0,                             // 播放进度
+    var duration: Long = 0,                             // 总时长
+    var timestamp: Long = System.currentTimeMillis()    // 开始播放时间戳
 ) {
     companion object {
-        fun create(localAudio: LocalAudio): PlaySession {
-            return PlaySession(0, localAudio.path, 1, false, 0, 0, System.currentTimeMillis())
-        }
+        const val MEDIA_TYPE_AUDIO = 1
+        const val MEDIA_TYPE_VIDEO = 2
     }
 }

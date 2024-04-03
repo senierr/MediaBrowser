@@ -2,6 +2,9 @@ package com.senierr.media.repository.service.impl
 
 import com.senierr.media.repository.entity.PlaySession
 import com.senierr.media.repository.service.api.IPlayControlService
+import com.senierr.media.repository.store.db.DatabaseManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 播控服务
@@ -11,11 +14,17 @@ import com.senierr.media.repository.service.api.IPlayControlService
  */
 class PlayControlService : IPlayControlService {
 
-    override suspend fun savePlaySession(playSession: PlaySession) {
+    private val playSessionDao by lazy { DatabaseManager.getDatabase().getPlaySessionDao() }
 
+    override suspend fun savePlaySession(playSession: PlaySession) {
+        return withContext(Dispatchers.IO) {
+            return@withContext playSessionDao.insertOrReplace(playSession)
+        }
     }
 
     override suspend fun fetchPlaySession(): PlaySession? {
-        return null
+        return withContext(Dispatchers.IO) {
+            return@withContext playSessionDao.getAll().firstOrNull()
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.senierr.media.domain.audio.viewmodel
 import android.content.Context
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import androidx.annotation.OptIn
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
@@ -11,7 +12,10 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.extractor.DefaultExtractorsFactory
 import com.senierr.base.support.arch.viewmodel.BaseViewModel
 import com.senierr.base.util.LogUtil
 import com.senierr.media.SessionApplication
@@ -21,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
+import okhttp3.OkHttpClient
 
 /**
  * 播放器控制
@@ -84,10 +89,6 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
         }
     }
 
-    init {
-        initialize()
-    }
-
     /**
      * 实体转为播放项
      */
@@ -102,13 +103,16 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 初始化
      */
-    private fun initialize() {
+    @OptIn(UnstableApi::class) open fun initialize() {
         val context = SessionApplication.getInstance()
         // 初始化音频焦点
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager?
-        // 初始化播放器 TODO 总时长
+        // 初始化播放器
         mediaController = ExoPlayer.Builder(context)
             .setAudioAttributes(AudioAttributes.DEFAULT, false)
+            .setMediaSourceFactory(
+                DefaultMediaSourceFactory(context, DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true))
+            )
             .build()
         mediaController.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -123,8 +127,16 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
                 LogUtil.logD(TAG, "onPlaybackStateChanged: $playbackState")
                 if (playbackState == Player.STATE_READY) {
                     viewModelScope.launchSingle("initProgress") {
-                        val position = mediaController.currentPosition
-                        val duration = mediaController.duration
+                        var position = mediaController.currentPosition
+                        var duration = mediaController.duration
+                        if (duration <= 0) {
+                            position = 0
+                            duration = 0
+                        } else {
+                            if (position > duration) {
+                                position = duration
+                            }
+                        }
                         _progress.emit(Progress(position, duration))
                     }
                 }
@@ -157,8 +169,16 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     private fun setupProgressListener() {
         viewModelScope.launchSingle("setupProgressListener") {
             while (isActive && mediaController.isPlaying) {
-                val position = mediaController.currentPosition
-                val duration = mediaController.duration
+                var position = mediaController.currentPosition
+                var duration = mediaController.duration
+                if (duration <= 0) {
+                    position = 0
+                    duration = 0
+                } else {
+                    if (position > duration) {
+                        position = duration
+                    }
+                }
                 _progress.emit(Progress(position, duration))
                 // 延迟刷新
                 delay(500)
@@ -169,7 +189,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 设置播放列表
      */
-    fun setMediaItems(items: List<T>, startIndex: Int = -1, startPositionMs: Long = -1) {
+    open fun setMediaItems(items: List<T>, startIndex: Int = -1, startPositionMs: Long = -1) {
         LogUtil.logD(TAG, "setMediaItems: ${items.size}, $startIndex, $startPositionMs")
         viewModelScope.launchSingle("setMediaItems") {
             _playingList.emit(items)
@@ -195,7 +215,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 播放指定项
      */
-    fun play(position: Int) {
+    open fun play(position: Int) {
         LogUtil.logD(TAG, "play: $position")
         // 申请音频焦点
         if (!requestAudioFocus()) {
@@ -216,7 +236,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 播放
      */
-    fun play() {
+    open fun play() {
         LogUtil.logD(TAG, "play")
         // 申请音频焦点
         if (!requestAudioFocus()) {
@@ -234,7 +254,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 暂停播放
      */
-    fun pause(fromUser: Boolean) {
+    open fun pause(fromUser: Boolean) {
         LogUtil.logD(TAG, "pause: $fromUser")
         mediaController.pause()
     }
@@ -244,7 +264,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
      *
      * @param position 进度
      */
-    fun seekTo(position: Long): Boolean {
+    open fun seekTo(position: Long): Boolean {
         LogUtil.logD(TAG, "seekTo: $position")
         // 申请音频焦点
         if (!requestAudioFocus()) {
@@ -264,14 +284,14 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 是否有上一首
      */
-    fun hasPreviousItem(): Boolean {
+    open fun hasPreviousItem(): Boolean {
         return mediaController.hasPreviousMediaItem()
     }
 
     /**
      * 上一首
      */
-    fun skipToPrevious() {
+    open fun skipToPrevious() {
         LogUtil.logD(TAG, "skipToPrevious")
         // 申请音频焦点
         if (!requestAudioFocus()) {
@@ -292,14 +312,14 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 是否有下一首
      */
-    fun hasNextItem(): Boolean {
+    open fun hasNextItem(): Boolean {
         return mediaController.hasNextMediaItem()
     }
 
     /**
      * 下一首
      */
-    fun skipToNext() {
+    open fun skipToNext() {
         LogUtil.logD(TAG, "skipToNext")
         // 申请音频焦点
         if (!requestAudioFocus()) {
@@ -320,7 +340,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 设置播放模式
      */
-    fun setPlayMode(playMode: PlayMode) {
+    open fun setPlayMode(playMode: PlayMode) {
         LogUtil.logD(TAG, "setPlayMode: $playMode")
         when (playMode) {
             PlayMode.ONE -> {
@@ -346,14 +366,14 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 是否正在播放
      */
-    fun isPlaying(): Boolean {
+    open fun isPlaying(): Boolean {
         return mediaController.isPlaying
     }
 
     /**
      * 当前播放索引
      */
-    fun currentMediaItemIndex(): Int {
+    open fun currentMediaItemIndex(): Int {
         return mediaController.currentMediaItemIndex
     }
 

@@ -16,6 +16,8 @@ import coil.imageLoader
 import coil.memory.MemoryCache
 import com.senierr.base.util.LogUtil
 import com.senierr.media.domain.audio.service.AudioMediaBrowserService
+import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
+import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.MediaRepository
 import com.senierr.media.utils.LocalAudioFetcher
 
@@ -37,6 +39,8 @@ class SessionApplication : Application(), ImageLoaderFactory, ViewModelStoreOwne
     private val isDebug = true
     private val _viewModelStore = ViewModelStore()
 
+    private val controlViewModel: AudioControlViewModel by applicationViewModel()
+
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "onCreate")
@@ -44,8 +48,10 @@ class SessionApplication : Application(), ImageLoaderFactory, ViewModelStoreOwne
 
         LogUtil.isDebug = isDebug
         MediaRepository.initialize(application)
-
         startForegroundService(Intent(this, AudioMediaBrowserService::class.java))
+
+        controlViewModel.initialize()
+        controlViewModel.restore()
     }
 
     override val viewModelStore: ViewModelStore
