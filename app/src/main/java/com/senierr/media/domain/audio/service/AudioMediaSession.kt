@@ -112,12 +112,7 @@ class AudioMediaSession(
         if (playingItem == null) {
             setMetadata(null)
         } else {
-            val mediaMetadata: MediaMetadataCompat = MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, playingItem.displayName)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, playingItem.artist)
-                .putString(MediaMetadataCompat.METADATA_KEY_ART_URI, playingItem.getUri().toString())
-                .build()
-            setMetadata(mediaMetadata)
+            setMetadata(createMediaMetadata(playingItem, controlViewModel.progress.value.duration))
         }
     }
 
@@ -126,22 +121,7 @@ class AudioMediaSession(
      */
     private fun notifyIsPlayingChanged(isPlaying: Boolean) {
         LogUtil.logD(TAG, "notifyIsPlayingChanged: $isPlaying")
-        val state = if (isPlaying) {
-            PlaybackStateCompat.STATE_PLAYING
-        } else {
-            PlaybackStateCompat.STATE_PAUSED
-        }
-        val playbackState = PlaybackStateCompat.Builder()
-            .setActions(
-                PlaybackStateCompat.ACTION_PLAY
-                        or PlaybackStateCompat.ACTION_PAUSE
-                        or PlaybackStateCompat.ACTION_PLAY_PAUSE
-                        or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                        or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-            )
-            .setState(state, controlViewModel.progress.value.position, 1.0f)
-            .build()
-        setPlaybackState(playbackState)
+        setPlaybackState(createPlaybackState(controlViewModel.isPlaying(), controlViewModel.progress.value.position))
     }
 
     /**
@@ -150,31 +130,9 @@ class AudioMediaSession(
     private fun notifyProgressChanged(progress: BaseControlViewModel.Progress) {
         val playingItem = controlViewModel.playingItem.value?: return
         // 更新总时长
-        val mediaMetadata: MediaMetadataCompat = MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, playingItem.id.toString())
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, playingItem.displayName)
-            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, playingItem.artist)
-            .putString(MediaMetadataCompat.METADATA_KEY_ART_URI, playingItem.path)
-            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, progress.duration)
-            .build()
-        setMetadata(mediaMetadata)
+        setMetadata(createMediaMetadata(playingItem, progress.duration))
         // 更新进度
-        val state = if (controlViewModel.isPlaying()) {
-            PlaybackStateCompat.STATE_PLAYING
-        } else {
-            PlaybackStateCompat.STATE_PAUSED
-        }
-        val playbackState = PlaybackStateCompat.Builder()
-            .setActions(
-                PlaybackStateCompat.ACTION_PLAY
-                        or PlaybackStateCompat.ACTION_PAUSE
-                        or PlaybackStateCompat.ACTION_PLAY_PAUSE
-                        or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                        or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-            )
-            .setState(state, progress.position, 1.0f)
-            .build()
-        setPlaybackState(playbackState)
+        setPlaybackState(createPlaybackState(controlViewModel.isPlaying(), progress.position))
     }
 
     /**
@@ -200,5 +158,34 @@ class AudioMediaSession(
                 setShuffleMode(PlaybackStateCompat.SHUFFLE_MODE_ALL)
             }
         }
+    }
+
+    private fun createMediaMetadata(playingItem: LocalAudio, duration: Long): MediaMetadataCompat {
+        return MediaMetadataCompat.Builder()
+            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, playingItem.id.toString())
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, playingItem.displayName)
+            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, playingItem.artist)
+            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, playingItem.album)
+            .putString(MediaMetadataCompat.METADATA_KEY_ART_URI, playingItem.path)
+            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
+            .build()
+    }
+
+    private fun createPlaybackState(isPlaying: Boolean, position: Long): PlaybackStateCompat {
+        val state = if (isPlaying) {
+            PlaybackStateCompat.STATE_PLAYING
+        } else {
+            PlaybackStateCompat.STATE_PAUSED
+        }
+        return PlaybackStateCompat.Builder()
+            .setActions(
+                PlaybackStateCompat.ACTION_PLAY
+                        or PlaybackStateCompat.ACTION_PAUSE
+                        or PlaybackStateCompat.ACTION_PLAY_PAUSE
+                        or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                        or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+            )
+            .setState(state, position, 1.0f)
+            .build()
     }
 }

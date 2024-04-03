@@ -33,7 +33,8 @@ data class LocalAudio(
     val displayName: String,    // 文件名
     val bucketPath: String,     // 上级文件夹路径
     val mimeType: String,       // MIME类型
-    val artist: String,         // 作者
+    val artist: String = "",    // 作者
+    val album: String = "",     // 专辑
     var duration: Long = 0      // 时长，默认为0，需要后续去获取
 ) : LocalFile, Parcelable {
     fun getUri(): Uri {
@@ -63,7 +64,8 @@ data class LocalVideo(
     val displayName: String,    // 文件名
     val bucketPath: String,     // 上级文件夹路径
     val mimeType: String,       // MIME类型
-    val artist: String,         // 作者
+    val artist: String = "",    // 作者
+    val album: String = "",     // 专辑
     var duration: Long = 0      // 时长，默认为0，需要后续去获取
 ) : LocalFile, Parcelable {
     fun getUri(): Uri {
