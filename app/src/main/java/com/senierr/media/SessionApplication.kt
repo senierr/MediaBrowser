@@ -48,7 +48,7 @@ class SessionApplication : Application(), ImageLoaderFactory, ViewModelStoreOwne
 
         LogUtil.isDebug = isDebug
         MediaRepository.initialize(application)
-        startForegroundService(Intent(this, AudioMediaBrowserService::class.java))
+        startService(Intent(this, AudioMediaBrowserService::class.java))
 
         controlViewModel.initialize()
         controlViewModel.restore()

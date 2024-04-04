@@ -65,7 +65,7 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
         if (bucketPath.isNullOrBlank()) {
             controlViewModel.autoPlay()
         } else {
-            controlViewModel.play(bucketPath, localAudio)
+            controlViewModel.forcePlay(bucketPath, localAudio)
         }
     }
 

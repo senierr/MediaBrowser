@@ -47,7 +47,7 @@ class AudioMiniBar @JvmOverloads constructor(
 
         binding.root.onThrottleClick {
             LogUtil.logD(TAG, "root onClick")
-            AudioPlayerActivity.start(context)
+            controlViewModel?.getSessionActivityIntent()?.send()
         }
         // 上一首
         binding.btnPlayPrevious.onThrottleClick {
@@ -96,11 +96,7 @@ class AudioMiniBar @JvmOverloads constructor(
      * 更新播放项
      */
     private fun notifyPlayingItemChanged(mediaMetadata: MediaMetadataCompat?) {
-        // 相同数据，不处理
-        if (mediaMetadata?.description?.mediaId == binding.ivCover.tag) return
-
-        LogUtil.logD(TAG, "notifyPlayingItemChanged: $mediaMetadata")
-        binding.ivCover.tag = mediaMetadata?.description?.mediaId
+        LogUtil.logD(TAG, "notifyPlayingItemChanged: ${mediaMetadata?.description?.title}")
         val tempLocalAudio = LocalAudio(0, mediaMetadata?.getString(MediaMetadataCompat.METADATA_KEY_ART_URI)?: "", "", "", "", "")
         binding.ivCover.load(tempLocalAudio) {
             transformations(CircleCropTransformation())

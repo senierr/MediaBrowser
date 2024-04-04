@@ -1,6 +1,7 @@
 package com.senierr.media.domain.audio.widget.viewmodel
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -156,7 +158,9 @@ abstract class BaseControlViewModel : BaseViewModel() {
      * 处理播放媒体变更
      */
     protected open fun onHandleMetadataChanged(metadata: MediaMetadataCompat?) {
+        Log.d(TAG, "onHandleMetadataChanged: ${metadata?.description?.title}")
         _playingItem.tryEmit(metadata)
+        _progress.tryEmit(Progress(mediaController?.playbackState?.position?: 0, metadata?.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)?: 0))
     }
 
     /**
@@ -219,5 +223,12 @@ abstract class BaseControlViewModel : BaseViewModel() {
     fun sendCustomAction(action: String, args: Bundle) {
         Log.d(TAG, "sendCustomAction: $action, $args")
         mediaController?.transportControls?.sendCustomAction(action, args)
+    }
+
+    /**
+     * 获取点击意图
+     */
+    fun getSessionActivityIntent(): PendingIntent? {
+        return mediaController?.sessionActivity
     }
 }

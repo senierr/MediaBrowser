@@ -1,7 +1,12 @@
 package com.senierr.media.domain.audio.service
 
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -9,19 +14,29 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.toBitmapOrNull
+import androidx.media.MediaBrowserServiceCompat
+import androidx.media.session.MediaButtonReceiver
+import coil.imageLoader
+import coil.request.ImageRequest
+import com.senierr.base.support.ktx.runCatchSilent
 import com.senierr.base.support.ktx.showToast
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
+import com.senierr.media.domain.audio.AudioPlayerActivity
 import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
 import com.senierr.media.domain.audio.viewmodel.BaseControlViewModel
 import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalAudio
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 /**
  * 媒体会话
@@ -32,11 +47,15 @@ import kotlinx.coroutines.flow.onEach
 @SuppressLint("RestrictedApi")
 class AudioMediaSession(
     private val context: Context,
+    private val service: AudioMediaBrowserService,
     tag: String
 ) : MediaSessionCompat(context, tag), CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.Main) {
 
     companion object {
         private const val TAG = "AudioMediaSession"
+
+        private const val CHANNEL_ID = "100"
+        private const val CHANNEL_NAME = "AudioMediaBrowserService"
     }
 
     private val controlViewModel: AudioControlViewModel by applicationViewModel()
@@ -78,7 +97,14 @@ class AudioMediaSession(
         }
     }
 
+    private var updateMetadataJob: Job? = null
+
     init {
+        val manager = context.getSystemService(MediaBrowserServiceCompat.NOTIFICATION_SERVICE) as NotificationManager
+        val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
+        manager.createNotificationChannel(channel)
+        val pendingIntent = PendingIntent.getActivity(context, 1, Intent(context, AudioPlayerActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        setSessionActivity(pendingIntent)
         setCallback(callback, Handler(Looper.getMainLooper()))
         initViewModel()
     }
@@ -112,7 +138,11 @@ class AudioMediaSession(
         if (playingItem == null) {
             setMetadata(null)
         } else {
-            setMetadata(createMediaMetadata(playingItem, controlViewModel.progress.value.duration))
+            updateMetadataJob?.cancel()
+            updateMetadataJob = launch {
+                setMetadata(createMediaMetadata(playingItem, controlViewModel.progress.value.duration))
+                updateNotification()
+            }
         }
     }
 
@@ -130,7 +160,13 @@ class AudioMediaSession(
     private fun notifyProgressChanged(progress: BaseControlViewModel.Progress) {
         val playingItem = controlViewModel.playingItem.value?: return
         // 更新总时长
-        setMetadata(createMediaMetadata(playingItem, progress.duration))
+        val currentDuration = controller.metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
+        if (currentDuration != progress.duration) {
+            updateMetadataJob?.cancel()
+            updateMetadataJob = launch {
+                setMetadata(createMediaMetadata(playingItem, progress.duration))
+            }
+        }
         // 更新进度
         setPlaybackState(createPlaybackState(controlViewModel.isPlaying(), progress.position))
     }
@@ -160,13 +196,23 @@ class AudioMediaSession(
         }
     }
 
-    private fun createMediaMetadata(playingItem: LocalAudio, duration: Long): MediaMetadataCompat {
+    private suspend fun createMediaMetadata(playingItem: LocalAudio, duration: Long): MediaMetadataCompat {
+        val artIcon = runCatchSilent({
+            context.imageLoader
+                .execute(ImageRequest.Builder(context).data(playingItem).build())
+                .drawable?.toBitmapOrNull(200, 200)
+        }, {
+            LogUtil.logW(TAG, "toBitmapOrNull: $it")
+            null
+        })
+        LogUtil.logD(TAG, "createMediaMetadata: $duration")
         return MediaMetadataCompat.Builder()
             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, playingItem.id.toString())
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, playingItem.displayName)
             .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, playingItem.artist)
             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, playingItem.album)
             .putString(MediaMetadataCompat.METADATA_KEY_ART_URI, playingItem.path)
+            .putBitmap(MediaMetadataCompat.METADATA_KEY_ART, artIcon)
             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
             .build()
     }
@@ -184,8 +230,49 @@ class AudioMediaSession(
                         or PlaybackStateCompat.ACTION_PLAY_PAUSE
                         or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
                         or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                        or PlaybackStateCompat.ACTION_STOP
             )
             .setState(state, position, 1.0f)
             .build()
+    }
+
+    private fun updateNotification() {
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID).apply {
+            setStyle(
+                androidx.media.app.NotificationCompat.MediaStyle()
+                    .setMediaSession(sessionToken)
+                    .setShowActionsInCompactView(1)
+                    .setShowCancelButton(true)
+                    .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(context, PlaybackStateCompat.ACTION_STOP))
+            )
+            setContentIntent(controller.sessionActivity)
+            setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(context, PlaybackStateCompat.ACTION_STOP))
+            setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+
+            val mediaMetadata = controller.metadata
+            val description = mediaMetadata.description
+            setContentTitle(description.title)
+            setContentText(description.subtitle)
+            setSubText(description.description)
+            setLargeIcon(description.iconBitmap)
+            setSmallIcon(R.mipmap.ic_launcher)
+
+            addAction(NotificationCompat.Action(
+                R.drawable.ic_skip_previous,
+                context.getString(R.string.skip_previous),
+                MediaButtonReceiver.buildMediaButtonPendingIntent(context, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+            ))
+            addAction(NotificationCompat.Action(
+                R.drawable.ic_pause,
+                context.getString(R.string.pause),
+                MediaButtonReceiver.buildMediaButtonPendingIntent(context, PlaybackStateCompat.ACTION_PLAY_PAUSE)
+            ))
+            addAction(NotificationCompat.Action(
+                R.drawable.ic_skip_next,
+                context.getString(R.string.skip_next),
+                MediaButtonReceiver.buildMediaButtonPendingIntent(context, PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
+            ))
+        }
+        service.startForeground(1, builder.build())
     }
 }

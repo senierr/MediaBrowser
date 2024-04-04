@@ -8,17 +8,18 @@ import kotlinx.coroutines.CancellationException
  * @date 2022/04/15
  */
 
-inline fun runCatchSilent(
-    success: () -> Unit,
-    error: (e: Exception) -> Unit,
-) {
-    try {
+inline fun <T> runCatchSilent(
+    success: () -> T?,
+    error: (e: Exception) -> T?,
+): T? {
+    return try {
         success.invoke()
     } catch (e: Exception) {
         if (e is CancellationException) {
             // ignore
+            null
         } else {
-            error.invoke(e)
+            return error.invoke(e)
         }
     }
 }

@@ -1,9 +1,14 @@
 <resources>
-    <string name="app_name">媒体浏览器</string>
+    <string name="app_name">Palette</string>
 
     <string name="tab_image">图片</string>
     <string name="tab_audio">音乐</string>
     <string name="tab_video">视频</string>
+
+    <string name="play">播放</string>
+    <string name="pause">暂停</string>
+    <string name="skip_next">下一首</string>
+    <string name="skip_previous">上一首</string>
 
     <string name="play_mode_list">顺序播放</string>
     <string name="play_mode_all">列表循环</string>

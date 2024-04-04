@@ -94,7 +94,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
                 val playSession = playControlService.fetchPlaySession()
                 LogUtil.logD(TAG, "restore playSession: $playSession")
                 if (playSession == null) return@runCatchSilent
-                play(playSession.bucketPath, playType = PlayType.NOT_PLAY)
+                setup(playSession.bucketPath, playType = PlayType.NOT_PLAY)
             }, {
                 LogUtil.logE(TAG, "restore error: ${Log.getStackTraceString(it)}")
             })
@@ -112,7 +112,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
                 val playSession = playControlService.fetchPlaySession()
                 LogUtil.logD(TAG, "autoPlay playSession: $playSession")
                 if (playSession == null) return@runCatchSilent
-                play(playSession.bucketPath, playType = PlayType.AUTO_PLAY)
+                setup(playSession.bucketPath, playType = PlayType.AUTO_PLAY)
             }, {
                 LogUtil.logE(TAG, "autoPlay error: ${Log.getStackTraceString(it)}")
             })
@@ -120,22 +120,30 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
     }
 
     /**
-     * 播放
+     * 强制播放
      */
-    fun play(bucketPath: String, localAudio: LocalAudio? = null, playType: PlayType = PlayType.FORCE_PLAY) {
-        viewModelScope.launchSingle("play") {
+    fun forcePlay(bucketPath: String, localAudio: LocalAudio? = null) {
+        LogUtil.logD(TAG, "forcePlay: $bucketPath, $localAudio")
+        setup(bucketPath, localAudio, PlayType.FORCE_PLAY)
+    }
+
+    /**
+     * 启动
+     */
+    private fun setup(bucketPath: String, localAudio: LocalAudio? = null, playType: PlayType = PlayType.AUTO_PLAY) {
+        viewModelScope.launchSingle("setup") {
             runCatchSilent({
-                LogUtil.logD(TAG, "play: $bucketPath, $localAudio, $playType")
+                LogUtil.logD(TAG, "setup: $bucketPath, $localAudio, $playType")
                 if (bucketPath.isBlank()) return@runCatchSilent
                 // 拉取数据
                 val audios = mediaService.fetchLocalAudios(bucketPath, true)
                 _localAudios.emit(UIState.Content(audios))
-                LogUtil.logD(TAG, "play audios: ${audios.size}")
+                LogUtil.logD(TAG, "setup audios: ${audios.size}")
                 // 若无数据，返回
                 if (audios.isEmpty()) return@runCatchSilent
                 // 播放会话
                 val playSession = playControlService.fetchPlaySession()
-                LogUtil.logD(TAG, "play playSession: $playSession")
+                LogUtil.logD(TAG, "setup playSession: $playSession")
                 currentPlaySession = if (localAudio != null) {
                     if (localAudio.path == playSession?.path) {
                         // 有对应播放会话记录，使用历史会话
@@ -174,9 +182,9 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
                         play(startIndex)
                     }
                 }
-                LogUtil.logD(TAG, "play success: $currentPlaySession")
+                LogUtil.logD(TAG, "setup success: $currentPlaySession")
             }, {
-                LogUtil.logE(TAG, "play error: ${Log.getStackTraceString(it)}")
+                LogUtil.logE(TAG, "setup error: ${Log.getStackTraceString(it)}")
                 _localAudios.emit(UIState.Error(it))
             })
         }

@@ -1,13 +1,11 @@
 package com.senierr.media.domain.audio.service
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
+import androidx.media.session.MediaButtonReceiver
 import com.senierr.base.util.LogUtil
-import com.senierr.media.R
 
 /**
  * @author senierr_zhou
@@ -18,8 +16,6 @@ class AudioMediaBrowserService : MediaBrowserServiceCompat() {
     companion object {
         private const val TAG = "AudioMediaBrowserService"
         private const val MC_RECENT_ROOT = "__RECENT__"
-        private const val CHANNEL_ID = "100"
-        private const val CHANNEL_NAME = "AudioMediaBrowserService"
     }
 
     private var mediaSession: AudioMediaSession? = null
@@ -27,18 +23,14 @@ class AudioMediaBrowserService : MediaBrowserServiceCompat() {
     override fun onCreate() {
         super.onCreate()
         LogUtil.logD(TAG, "onCreate")
-        mediaSession = AudioMediaSession(this, TAG)
+        mediaSession = AudioMediaSession(this, this, TAG)
         mediaSession?.isActive = true
         sessionToken = mediaSession?.sessionToken
-        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
-        manager.createNotificationChannel(channel)
-        val notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle(CHANNEL_NAME)
-            .setContentText(CHANNEL_NAME)
-            .setSmallIcon(R.drawable.ic_audio)
-            .build()
-        startForeground(1, notification)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        mediaSession?.let { MediaButtonReceiver.handleIntent(it, intent) }
+        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onDestroy() {
