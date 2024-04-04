@@ -8,11 +8,15 @@ import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import coil.transform.CircleCropTransformation
+import com.dirror.lyricviewx.OnPlayClickListener
+import com.dirror.lyricviewx.OnSingleClickListener
 import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ktx.onThrottleClick
+import com.senierr.base.support.ktx.setGone
 import com.senierr.base.support.ktx.showToast
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
+import com.senierr.base.util.ScreenUtil
 import com.senierr.media.R
 import com.senierr.media.databinding.ActivityAudioPlayerBinding
 import com.senierr.media.domain.audio.dialog.PlayingListDialog
@@ -23,7 +27,7 @@ import com.senierr.media.repository.entity.LocalAudio
 import com.senierr.media.utils.Utils
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * 音乐播放页面
@@ -71,9 +75,15 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
 
     private fun initView() {
         // 返回按钮
-        binding.layoutTopBar.btnBack.onThrottleClick {
-            LogUtil.logD(TAG, "btnBack onClick")
+        binding.btnClose.onThrottleClick {
+            LogUtil.logD(TAG, "btnClose onClick")
             finish()
+        }
+
+        binding.llContent.onThrottleClick {
+            LogUtil.logD(TAG, "llContent onClick")
+            binding.llContent.setGone(true)
+            binding.lvLyric.setGone(false)
         }
         // 上一首
         binding.btnPlayPrevious.onThrottleClick {
@@ -146,6 +156,29 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
             }
             playingListDialog.showNow(supportFragmentManager, "playingListDialog")
         }
+
+        // 歌词
+        binding.lvLyric.setLabel(getString(R.string.song_have_no_lyric))
+        binding.lvLyric.setNormalTextSize(ScreenUtil.dp2px(this, 14F).toFloat())
+        binding.lvLyric.setNormalColor(getColor(R.color.text_content_sub))
+        binding.lvLyric.setCurrentTextSize(ScreenUtil.dp2px(this, 16F).toFloat())
+        binding.lvLyric.setCurrentColor(getColor(R.color.text_theme))
+        binding.lvLyric.setDraggable(true, object : OnPlayClickListener {
+            override fun onPlayClick(time: Long): Boolean {
+                controlViewModel.seekTo(time)
+                return true
+            }
+        })
+        binding.lvLyric.setTimelineColor(getColor(R.color.window_layer_black))
+        binding.lvLyric.setTimelineTextColor(getColor(R.color.text_title))
+        binding.lvLyric.setTimeTextColor(getColor(R.color.text_title))
+        binding.lvLyric.setOnSingerClickListener(object : OnSingleClickListener {
+            override fun onClick() {
+                LogUtil.logD(TAG, "lvLyric onClick")
+                binding.lvLyric.setGone(true)
+                binding.llContent.setGone(false)
+            }
+        })
     }
 
     private fun initViewModel() {
@@ -185,10 +218,19 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
      */
     private fun notifyPlayingItemChanged(playingItem: LocalAudio?) {
         LogUtil.logD(TAG, "notifyPlayingItemChanged: $playingItem")
-        binding.layoutTopBar.tvTitle.text = playingItem?.displayName
+        binding.tvTitle.text = playingItem?.displayName
+        binding.tvArtist.text = playingItem?.artist
         binding.ivCover.load(playingItem) {
             transformations(CircleCropTransformation())
             error(R.drawable.ic_album)
+        }
+        if (playingItem != null) {
+            val lrcFile = File(playingItem.path.substringBefore(".") + ".lrc")
+            if (lrcFile.exists()) {
+                binding.lvLyric.loadLyric(lrcFile.readText())
+            } else {
+                binding.lvLyric.loadLyric(null)
+            }
         }
     }
 
@@ -211,6 +253,8 @@ class AudioPlayerActivity : BaseActivity<ActivityAudioPlayerBinding>() {
         binding.sbSeek.progress = progress.position.toInt()
         binding.tvPosition.text = Utils.formatDuration(progress.position)
         binding.tvDuration.text = Utils.formatDuration(progress.duration)
+        // 更新歌词
+        binding.lvLyric.updateTime(progress.position)
     }
 
     /**

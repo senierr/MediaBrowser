@@ -26,6 +26,7 @@ concurrent-futures-ktx = "1.1.0"
 multitype = "2.4.0"
 flow-layout = "1.3.0"
 photoView = "2.3.0"
+lyricView = "1.3.2"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -63,6 +64,7 @@ coil-transformations = { module = "com.github.Commit451.coil-transformations:tra
 multitype = { module = "io.github.senierr:multitype", version.ref = "multitype" }
 flow-layout = { module = "com.nex3z:flow-layout", version.ref = "flow-layout" }
 photoView = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoView" }
+lyricView = { module = "com.github.Moriafly:LyricViewX", version.ref = "lyricView" }
 
 [plugins]
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

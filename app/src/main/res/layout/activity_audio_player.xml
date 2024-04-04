@@ -5,21 +5,70 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <include
-        android:id="@+id/layout_top_bar"
-        layout="@layout/layout_top_bar"/>
-
     <ImageView
-        android:id="@+id/iv_cover"
-        android:src="@drawable/ic_album"
-        android:scaleType="centerCrop"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="@dimen/dp_200"
-        android:layout_width="@dimen/dp_240"
-        android:layout_height="@dimen/dp_240">
-    </ImageView>
+        android:id="@+id/btn_close"
+        android:src="@drawable/ic_close"
+        app:tint="@color/btn_black"
+        android:padding="@dimen/dp_16"
+        android:layout_width="@dimen/dp_56"
+        android:layout_height="@dimen/dp_56"/>
+
+    <LinearLayout
+        android:id="@+id/ll_content"
+        android:orientation="vertical"
+        android:layout_below="@id/btn_close"
+        android:layout_above="@id/rl_progress"
+        android:gravity="center_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/iv_cover"
+            android:src="@drawable/ic_album"
+            android:scaleType="centerCrop"
+            android:layout_marginTop="@dimen/dp_100"
+            android:layout_width="@dimen/dp_240"
+            android:layout_height="@dimen/dp_240">
+        </ImageView>
+
+        <TextView
+            android:id="@+id/tv_title"
+            tools:text="歌曲名"
+            android:textSize="@dimen/sp_18"
+            android:textColor="@color/text_title"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="@dimen/dp_16"
+            android:layout_marginEnd="@dimen/dp_16"
+            android:layout_marginTop="@dimen/dp_32"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/tv_artist"
+            tools:text="歌手名字"
+            android:textSize="@dimen/sp_14"
+            android:textColor="@color/text_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="@dimen/dp_16"
+            android:layout_marginEnd="@dimen/dp_16"
+            android:layout_marginTop="@dimen/dp_8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <com.dirror.lyricviewx.LyricViewX
+        android:id="@+id/lv_lyric"
+        android:visibility="gone"
+        android:layout_below="@id/btn_close"
+        android:layout_above="@id/rl_progress"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <RelativeLayout
+        android:id="@+id/rl_progress"
         android:layout_above="@id/rl_control"
         android:paddingStart="@dimen/dp_16"
         android:paddingEnd="@dimen/dp_16"

@@ -51,12 +51,13 @@ dependencies {
     implementation libs.androidx.activity.ktx
     implementation libs.androidx.fragment.ktx
     implementation libs.androidx.viewpager2
+    implementation libs.androidx.media
+    implementation libs.androidx.media3.exoplayer
     implementation libs.coil
     implementation libs.coil.transformations
     implementation libs.coil.gif
     implementation libs.coil.video
     implementation libs.multitype
     implementation libs.photoView
-    implementation libs.androidx.media
-    implementation libs.androidx.media3.exoplayer
+    implementation libs.lyricView
 }

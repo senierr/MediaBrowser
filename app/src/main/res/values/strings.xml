@@ -19,4 +19,5 @@
     <string name="has_no_previous">当前为第一条</string>
 
     <string name="play_error">播放异常</string>
+    <string name="song_have_no_lyric">当前歌曲没有歌词</string>
 </resources>

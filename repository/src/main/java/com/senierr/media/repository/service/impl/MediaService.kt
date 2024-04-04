@@ -270,7 +270,7 @@ class MediaService(private val context: Context) : IMediaService {
                             id, data, displayName, data.substringBeforeLast(File.separatorChar), mimeType, artist, album
                         )
                         result.add(localAudio)
-                        Log.d(TAG, "Add audio: $localAudio")
+//                        Log.d(TAG, "Add audio: $localAudio")
                     } else {
                         Log.w(TAG, "Add audio error: $id, $displayName, $data, $mimeType")
                     }

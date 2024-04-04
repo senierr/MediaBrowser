@@ -14,7 +14,7 @@
         <clip>
             <shape android:shape="rectangle">
                 <size android:height="@dimen/dp_1" />
-                <solid android:color="@color/btn_black" />
+                <solid android:color="@color/window_layer_black" />
             </shape>
         </clip>
     </item>
