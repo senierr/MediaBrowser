@@ -1,4 +1,4 @@
-package com.senierr.media.domain.audio.viewmodel
+package com.senierr.media.domain.common
 
 import android.content.Context
 import android.media.AudioFocusRequest
@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
-import okhttp3.OkHttpClient
 
 /**
  * 播放器控制

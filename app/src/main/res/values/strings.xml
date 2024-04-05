@@ -5,6 +5,8 @@
     <string name="tab_audio">音乐</string>
     <string name="tab_video">视频</string>
 
+    <string name="play_all">全部播放</string>
+
     <string name="play">播放</string>
     <string name="pause">暂停</string>
     <string name="skip_next">下一首</string>

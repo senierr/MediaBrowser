@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
@@ -20,7 +20,17 @@
         android:maxLines="1"
         android:ellipsize="middle"
         android:gravity="center"
+        android:layout_below="@id/iv_album"
         android:layout_marginTop="@dimen/dp_8"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
-</LinearLayout>
+
+    <com.senierr.base.widget.PlayingIcon
+        android:id="@+id/iv_playing_icon"
+        app:pointerColor="@color/white"
+        app:pointerWidth="@dimen/dp_3"
+        android:layout_alignBottom="@id/iv_album"
+        android:layout_margin="@dimen/dp_12"
+        android:layout_width="@dimen/dp_16"
+        android:layout_height="@dimen/dp_16"/>
+</RelativeLayout>

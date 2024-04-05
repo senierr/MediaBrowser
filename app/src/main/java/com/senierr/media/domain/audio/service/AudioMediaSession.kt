@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -26,7 +25,7 @@ import com.senierr.base.util.LogUtil
 import com.senierr.media.R
 import com.senierr.media.domain.audio.AudioPlayerActivity
 import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
-import com.senierr.media.domain.audio.viewmodel.BaseControlViewModel
+import com.senierr.media.domain.common.BaseControlViewModel
 import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalAudio
 import kotlinx.coroutines.CoroutineScope

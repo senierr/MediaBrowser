@@ -49,34 +49,20 @@ class PlayingListWrapper : ViewHolderWrapper<LocalAudio>(R.layout.item_audio_pla
 
     override fun onBindViewHolder(holder: ViewHolder, item: LocalAudio, payloads: List<Any>) {
         val binding = ItemAudioPlayingListBinding.bind(holder.itemView)
-        if (payloads.contains(PAYLOAD_REFRESH_PLAY_STATUS)) {
-            if (holder.layoutPosition == controlViewModel.currentMediaItemIndex()) {
-                binding.root.setBackgroundResource(R.color.app_theme_light)
-                binding.tvIndex.setGone(true)
-                binding.ivPlayingIcon.setGone(false)
-                binding.ivPlayingIcon.setMusicPlaying(true)
-                binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_theme))
-            } else {
-                binding.root.setBackgroundResource(R.color.transparent)
-                binding.tvIndex.setGone(false)
-                binding.ivPlayingIcon.setMusicPlaying(false)
-                binding.ivPlayingIcon.setGone(true)
-                binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_title))
-            }
+        if (item.id == controlViewModel.playingItem.value?.id) {
+            binding.root.setBackgroundResource(R.color.app_theme_light)
+            binding.tvIndex.setGone(true)
+            binding.ivPlayingIcon.setGone(false)
+            binding.ivPlayingIcon.setMusicPlaying(controlViewModel.isPlaying())
+            binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_theme))
         } else {
-            if (holder.layoutPosition == controlViewModel.currentMediaItemIndex()) {
-                binding.root.setBackgroundResource(R.color.app_theme_light)
-                binding.tvIndex.setGone(true)
-                binding.ivPlayingIcon.setGone(false)
-                binding.ivPlayingIcon.setMusicPlaying(true)
-                binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_theme))
-            } else {
-                binding.root.setBackgroundResource(R.color.transparent)
-                binding.tvIndex.setGone(false)
-                binding.ivPlayingIcon.setMusicPlaying(false)
-                binding.ivPlayingIcon.setGone(true)
-                binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_title))
-            }
+            binding.root.setBackgroundResource(R.color.transparent)
+            binding.tvIndex.setGone(false)
+            binding.ivPlayingIcon.setMusicPlaying(false)
+            binding.ivPlayingIcon.setGone(true)
+            binding.tvDisplayName.setTextColor(binding.tvDisplayName.context.getColor(R.color.text_title))
+        }
+        if (!payloads.contains(PAYLOAD_REFRESH_PLAY_STATUS)) {
             binding.tvIndex.text = "${holder.layoutPosition}"
             binding.tvDisplayName.text = item.displayName
         }

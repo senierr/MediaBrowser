@@ -21,7 +21,7 @@ import com.senierr.media.R
 import com.senierr.media.databinding.ActivityAudioPlayerBinding
 import com.senierr.media.domain.audio.dialog.PlayingListDialog
 import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
-import com.senierr.media.domain.audio.viewmodel.BaseControlViewModel
+import com.senierr.media.domain.common.BaseControlViewModel
 import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalAudio
 import com.senierr.media.utils.Utils

@@ -1,4 +1,4 @@
-package com.senierr.media.domain.audio.viewmodel
+package com.senierr.media.domain.video.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
@@ -9,7 +9,7 @@ import com.senierr.base.support.ktx.runCatchSilent
 import com.senierr.base.util.LogUtil
 import com.senierr.media.domain.common.BaseControlViewModel
 import com.senierr.media.repository.MediaRepository
-import com.senierr.media.repository.entity.LocalAudio
+import com.senierr.media.repository.entity.LocalVideo
 import com.senierr.media.repository.entity.PlaySession
 import com.senierr.media.repository.service.api.IMediaService
 import com.senierr.media.repository.service.api.IPlayControlService
@@ -20,12 +20,12 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 /**
- * 音乐控制
+ * 视频控制
  *
  * @author senierr
  * @date 2024/3/31
  */
-class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
+class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
 
     enum class PlayType {
         NOT_PLAY,   // 不播放
@@ -34,15 +34,15 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
     }
 
     // 当前目录下数据
-    private val _localAudios = MutableStateFlow<UIState<List<LocalAudio>>>(UIState.Empty)
-    val localAudios = _localAudios.asStateFlow()
+    private val _localVideos = MutableStateFlow<UIState<List<LocalVideo>>>(UIState.Empty)
+    val localVideos = _localVideos.asStateFlow()
 
     private val mediaService: IMediaService = MediaRepository.getService()
     private val playControlService: IPlayControlService = MediaRepository.getService()
     // 当前会话
     private var currentPlaySession: PlaySession = PlaySession()
 
-    override fun onItemCovertToMediaItem(item: LocalAudio): MediaItem {
+    override fun onItemCovertToMediaItem(item: LocalVideo): MediaItem {
         val metadata = MediaMetadata.Builder()
             .setTitle(item.displayName)
             .setArtist(item.artist)
@@ -123,52 +123,52 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
     /**
      * 强制播放
      */
-    fun forcePlay(bucketPath: String, localAudio: LocalAudio? = null) {
-        LogUtil.logD(TAG, "forcePlay: $bucketPath, $localAudio")
-        setup(bucketPath, localAudio, PlayType.FORCE_PLAY)
+    fun forcePlay(bucketPath: String, localVideo: LocalVideo? = null) {
+        LogUtil.logD(TAG, "forcePlay: $bucketPath, $localVideo")
+        setup(bucketPath, localVideo, PlayType.FORCE_PLAY)
     }
 
     /**
      * 启动
      */
-    private fun setup(bucketPath: String, localAudio: LocalAudio? = null, playType: PlayType = PlayType.AUTO_PLAY) {
+    private fun setup(bucketPath: String, localVideo: LocalVideo? = null, playType: PlayType = PlayType.AUTO_PLAY) {
         viewModelScope.launchSingle("setup") {
             runCatchSilent({
-                LogUtil.logD(TAG, "setup: $bucketPath, $localAudio, $playType")
+                LogUtil.logD(TAG, "setup: $bucketPath, $localVideo, $playType")
                 if (bucketPath.isBlank()) return@runCatchSilent
                 // 拉取数据
-                val audios = mediaService.fetchLocalAudios(bucketPath, true)
-                _localAudios.emit(UIState.Content(audios))
-                LogUtil.logD(TAG, "setup audios: ${audios.size}")
+                val videos = mediaService.fetchLocalVideos(bucketPath, true)
+                _localVideos.emit(UIState.Content(videos))
+                LogUtil.logD(TAG, "setup videos: ${videos.size}")
                 // 若无数据，返回
-                if (audios.isEmpty()) return@runCatchSilent
+                if (videos.isEmpty()) return@runCatchSilent
                 // 播放会话
                 val playSession = playControlService.fetchPlaySession()
                 LogUtil.logD(TAG, "setup playSession: $playSession")
-                currentPlaySession = if (localAudio != null) {
-                    if (localAudio.path == playSession?.path) {
+                currentPlaySession = if (localVideo != null) {
+                    if (localVideo.path == playSession?.path) {
                         // 有对应播放会话记录，使用历史会话
                         playSession
                     } else {
                         // 没有对应播放会话记录，创建新会话
                         PlaySession().apply {
-                            this.path = localAudio.path
+                            this.path = localVideo.path
                             this.bucketPath = bucketPath
-                            this.mediaType = PlaySession.MEDIA_TYPE_AUDIO
+                            this.mediaType = PlaySession.MEDIA_TYPE_VIDEO
                         }
                     }
                 } else {
                     // 有会话记录使用会话记录，没有则创建第一首会话记录
                     playSession?: PlaySession().apply {
-                        this.path = audios.first().path
+                        this.path = videos.first().path
                         this.bucketPath = bucketPath
-                        this.mediaType = PlaySession.MEDIA_TYPE_AUDIO
+                        this.mediaType = PlaySession.MEDIA_TYPE_VIDEO
                     }
                 }
                 savePlaySession()
                 // 设置播放列表
-                val startIndex = audios.indexOfFirst { it.path == currentPlaySession.path }
-                setMediaItems(audios, startIndex, currentPlaySession.position)
+                val startIndex = videos.indexOfFirst { it.path == currentPlaySession.path }
+                setMediaItems(videos, startIndex, currentPlaySession.position)
                 // 自动播放策略
                 when (playType) {
                     PlayType.NOT_PLAY -> {
@@ -186,7 +186,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
                 LogUtil.logD(TAG, "setup success: $currentPlaySession")
             }, {
                 LogUtil.logE(TAG, "setup error: ${Log.getStackTraceString(it)}")
-                _localAudios.emit(UIState.Error(it))
+                _localVideos.emit(UIState.Error(it))
             })
         }
     }

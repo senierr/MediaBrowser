@@ -5,9 +5,47 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
-    <include
+    <LinearLayout
         android:id="@+id/layout_top_bar"
-        layout="@layout/layout_top_bar"/>
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_56"
+        android:background="@color/window_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:src="@drawable/ic_chevron_back"
+            android:background="@null"
+            android:layout_width="@dimen/dp_56"
+            android:layout_height="@dimen/dp_56"/>
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:text="@string/app_name"
+            android:textColor="@color/text_title"
+            android:textSize="@dimen/sp_18"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="@dimen/dp_8"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/btn_play_all"
+            android:text="@string/play_all"
+            android:textColor="@color/btn_theme"
+            android:textSize="@dimen/sp_15"
+            android:gravity="center"
+            android:layout_marginStart="@dimen/dp_8"
+            android:layout_marginEnd="@dimen/dp_16"
+            android:paddingStart="@dimen/dp_12"
+            android:paddingEnd="@dimen/dp_12"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
 
     <com.senierr.base.widget.MultiStateView
         android:id="@+id/msv_state"

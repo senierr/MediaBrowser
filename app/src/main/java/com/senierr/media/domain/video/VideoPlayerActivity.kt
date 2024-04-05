@@ -1,25 +1,33 @@
 package com.senierr.media.domain.video
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.senierr.adapter.internal.MultiTypeAdapter
+import coil.load
+import coil.transform.CircleCropTransformation
+import com.dirror.lyricviewx.OnPlayClickListener
+import com.dirror.lyricviewx.OnSingleClickListener
+import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ktx.onThrottleClick
+import com.senierr.base.support.ktx.setGone
+import com.senierr.base.support.ktx.showToast
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
+import com.senierr.base.util.ScreenUtil
+import com.senierr.media.R
 import com.senierr.media.databinding.ActivityVideoPlayerBinding
-import com.senierr.media.domain.audio.wrapper.PlayingListWrapper
+import com.senierr.media.domain.audio.dialog.PlayingListDialog
+import com.senierr.media.domain.common.BaseControlViewModel
+import com.senierr.media.domain.video.viewmodel.VideoControlViewModel
+import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalVideo
 import com.senierr.media.utils.Utils
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import java.io.File
 
 /**
  * 视频播放页面
@@ -30,95 +38,22 @@ import kotlinx.coroutines.launch
 class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
 
     companion object {
-        private const val INTERVAL_HIDE_SHORT = 1 * 1000L
-        private const val INTERVAL_HIDE_LONG = 5 * 1000L
+        fun start(context: Context) {
+            context.startActivity(Intent(context, VideoPlayerActivity::class.java))
+        }
 
-        fun start(context: Context, usbVideo: LocalVideo) {
+        fun start(context: Context, bucketPath: String, localVideo: LocalVideo? = null) {
             context.startActivity(Intent(context, VideoPlayerActivity::class.java).apply {
-                putExtra("usbVideo", usbVideo)
+                putExtra("bucketPath", bucketPath)
+                putExtra("localVideo", localVideo)
             })
         }
     }
 
-    private val multiTypeAdapter = MultiTypeAdapter()
-    private val playingListWrapper = PlayingListWrapper()
+    private val controlViewModel: VideoControlViewModel by applicationViewModel()
 
     // 进度条是否处于拖动状态
     private var isSeekBarDragging = false
-
-    // 隐藏控制栏任务
-    private var hideControlBarJob: Job? = null
-    // 隐藏定位进度任务
-    private var hideSeekProgressJob: Job? = null
-
-//    // 播放状态变更回调
-//    private val stateUiListener = GSYStateUiListener { state ->
-//        LogUtil.logD(TAG, "state-changed: $state")
-//        // 图标
-//        if (state == StandardGSYVideoPlayer.CURRENT_STATE_PLAYING) {
-//            binding.btnPlayOrPause.setImageResource(R.drawable.ic_pause_circle)
-//        } else {
-//            binding.btnPlayOrPause.setImageResource(R.drawable.ic_play_circle)
-//        }
-//    }
-//    // 播放进度回调
-//    private val videoProgressListener = GSYVideoProgressListener { _, _, currentPosition, duration ->
-//        notifyBottomProgress(currentPosition, duration)
-//    }
-//    // 播放器回调
-//    private val videoAllCallBack = object : GSYSampleCallBack() {
-//        override fun onStartPrepared(url: String?, vararg objects: Any?) {
-//            val title = objects.elementAt(0)
-//            if (title is String) {
-//                notifyTitle(title)
-//            }
-//        }
-//
-//        override fun onPrepared(url: String?, vararg objects: Any?) {
-//            // 检查是否能播放 TODO
-//
-//            // 缓存播放记录 TODO
-//        }
-//
-//        override fun onAutoComplete(url: String?, vararg objects: Any?) {
-//            // 自动播放下一首
-//            playNext(true)
-//        }
-//
-//        override fun onPlayError(url: String?, vararg objects: Any?) {
-//            showToast("播放错误")
-//            finish()
-//        }
-//    }
-//
-//    // 触摸控制
-//    private val onMediaControlListener = object : OnMediaControlListener() {
-//        override fun onClick() {
-//            // 单击切换控制栏显示
-//            if (isControlBarShowed()) {
-//                hideControlBar()
-//            } else {
-//                showControlBar()
-//            }
-//        }
-//
-//        override fun onVolumeChanged(distanceY: Float) {
-//            // 音量调节 TODO
-////            statusViewModel.adjustVolume(distanceY > 0)
-//        }
-//
-//        override fun onBrightnessChanged(distanceY: Float) {
-//            // 亮度调节 TODO
-////            statusViewModel.adjustBrightness(distanceY > 0)
-//        }
-//    }
-
-
-
-    // 当前播放的视频
-    private var currentUsbVideo: LocalVideo? = null
-    // 更新数据任务
-    private var notifyDataChangedJob: Job? = null
 
     override fun createViewBinding(layoutInflater: LayoutInflater): ActivityVideoPlayerBinding {
         return ActivityVideoPlayerBinding.inflate(layoutInflater)
@@ -126,174 +61,228 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val usbVideo: LocalVideo? = intent.getParcelableExtra("usbVideo")
-        if (usbVideo == null) {
-            finish()
-            return
-        }
         initView()
         initViewModel()
+        // 主动播放
+        val bucketPath: String? = intent.getStringExtra("bucketPath")
+        val localVideo = intent.getParcelableExtra<LocalVideo>("localVideo")
+        if (bucketPath.isNullOrBlank()) {
+            controlViewModel.autoPlay()
+        } else {
+            controlViewModel.forcePlay(bucketPath, localVideo)
+        }
     }
 
-    /********************************************* 初始化 *********************************************/
-
-    /**
-     * 初始化页面
-     */
-    @SuppressLint("ClickableViewAccessibility")
     private fun initView() {
         // 返回按钮
-        binding.btnBack.onThrottleClick { onBackPressed() }
+        binding.btnClose.onThrottleClick {
+            LogUtil.logD(TAG, "btnClose onClick")
+            finish()
+        }
+
+        binding.llContent.onThrottleClick {
+            LogUtil.logD(TAG, "llContent onClick")
+            binding.llContent.setGone(true)
+            binding.lvLyric.setGone(false)
+        }
         // 上一首
         binding.btnPlayPrevious.onThrottleClick {
-            showControlBar()
+            LogUtil.logD(TAG, "btnPlayPrevious onClick")
+            if (controlViewModel.hasPreviousItem()) {
+                controlViewModel.skipToPrevious()
+            } else {
+                showToast(R.string.has_no_previous)
+            }
         }
         // 播放/暂停
         binding.btnPlayOrPause.onThrottleClick {
-            showControlBar()
+            LogUtil.logD(TAG, "btnPlayOrPause onClick")
+            if (controlViewModel.isPlaying()) {
+                controlViewModel.pause(true)
+            } else {
+                controlViewModel.play()
+            }
         }
         // 下一首
         binding.btnPlayNext.onThrottleClick {
-            showControlBar()
+            LogUtil.logD(TAG, "btnPlayNext onClick")
+            if (controlViewModel.hasNextItem()) {
+                controlViewModel.skipToNext()
+            } else {
+                showToast(R.string.has_no_next)
+            }
         }
         // 进度条
         binding.sbSeek.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                if (p2 && isSeekBarDragging) {
-                    showControlBar()
-                }
-            }
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {}
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
                 isSeekBarDragging = true
-//                binding.mpPlayer.cancelFastPlay() TODO
             }
 
             override fun onStopTrackingTouch(p0: SeekBar?) {
                 isSeekBarDragging = false
-//                binding.vpPlayer.seekTo(binding.sbSeek.progress.toLong())
+                controlViewModel.seekTo(binding.sbSeek.progress.toLong())
             }
         })
-        // 控制区域
-        binding.llControl.onThrottleClick {
-            if (isControlBarShowed()) {
-                hideControlBar()
-            } else {
-                showControlBar()
+        // 播放模式
+        binding.btnPlayMode.onThrottleClick {
+            LogUtil.logD(TAG, "btnPlayMode onClick")
+            val newPlayMode = when (controlViewModel.playMode.value) {
+                BaseControlViewModel.PlayMode.ONE -> {
+                    showToast(R.string.play_mode_list)
+                    BaseControlViewModel.PlayMode.LIST
+                }
+                BaseControlViewModel.PlayMode.LIST -> {
+                    showToast(R.string.play_mode_all)
+                    BaseControlViewModel.PlayMode.ALL
+                }
+                BaseControlViewModel.PlayMode.ALL -> {
+                    showToast(R.string.play_mode_shuffle)
+                    BaseControlViewModel.PlayMode.SHUFFLE
+                }
+                BaseControlViewModel.PlayMode.SHUFFLE -> {
+                    showToast(R.string.play_mode_one)
+                    BaseControlViewModel.PlayMode.ONE
+                }
             }
+            controlViewModel.setPlayMode(newPlayMode)
         }
         // 播放列表
         binding.btnPlayingList.onThrottleClick {
-            showPlayingList()
-            hideControlBar()
+            LogUtil.logD(TAG, "showPlayingList")
+            val playingListDialog = PlayingListDialog { position, _ ->
+                controlViewModel.play(position)
+            }
+            playingListDialog.showNow(supportFragmentManager, "playingListDialog")
         }
-        binding.btnClose.onThrottleClick { hidePlayingList() }
-        binding.llPlayingList.onThrottleClick { hidePlayingList() }
 
-        binding.rvPlayingList.layoutManager = LinearLayoutManager(this)
-//        playingListWrapper.setOnItemClickListener { _, _, item -> startPlay(item) }
-        multiTypeAdapter.register(playingListWrapper)
-        binding.rvPlayingList.adapter = multiTypeAdapter
+        // 歌词
+        binding.lvLyric.setLabel(getString(R.string.song_have_no_lyric))
+        binding.lvLyric.setNormalTextSize(ScreenUtil.dp2px(this, 14F).toFloat())
+        binding.lvLyric.setNormalColor(getColor(R.color.text_content_sub))
+        binding.lvLyric.setCurrentTextSize(ScreenUtil.dp2px(this, 16F).toFloat())
+        binding.lvLyric.setCurrentColor(getColor(R.color.text_theme))
+        binding.lvLyric.setDraggable(true, object : OnPlayClickListener {
+            override fun onPlayClick(time: Long): Boolean {
+                controlViewModel.seekTo(time)
+                return true
+            }
+        })
+        binding.lvLyric.setTimelineColor(getColor(R.color.window_layer_black))
+        binding.lvLyric.setTimelineTextColor(getColor(R.color.text_title))
+        binding.lvLyric.setTimeTextColor(getColor(R.color.text_title))
+        binding.lvLyric.setOnSingerClickListener(object : OnSingleClickListener {
+            override fun onClick() {
+                LogUtil.logD(TAG, "lvLyric onClick")
+                binding.lvLyric.setGone(true)
+                binding.llContent.setGone(false)
+            }
+        })
     }
 
     private fun initViewModel() {
-//        mainViewModel.usbStatus
-//            .onEach {
-//                LogUtil.logD(TAG, "usbStatus-onChanged: $it")
-//                if (it.action == UsbStatus.ACTION_EJECT) {
-//                    finish()
-//                }
-//            }
-//            .launchIn(lifecycleScope)
-//        mainViewModel.usbFiles
-//            .onEach {
-//                val items = it.filterIsInstance<UsbVideo>()
-//                LogUtil.logD(TAG, "usbFiles-onChanged: ${items.size}")
-//                if (items.isNotEmpty()) {
-//                    notifyPlayingListDataChanged(items)
-//                }
-//            }
-//            .launchIn(lifecycleScope)
-    }
-
-    /********************************************* UI刷新 *********************************************/
-    /**
-     * 控制栏是否显示
-     */
-    private fun isControlBarShowed() = binding.llControl.visibility == View.VISIBLE
-
-    /**
-     * 显示控制栏
-     */
-    private fun showControlBar() {
-        binding.llControl.visibility = View.VISIBLE
-        hideControlBar(INTERVAL_HIDE_LONG)
-    }
-
-    /**
-     * 隐藏控制栏
-     */
-    private fun hideControlBar(delayTimes: Long = 0) {
-        hideControlBarJob?.cancel()
-        hideControlBarJob = lifecycleScope.launch {
-            if (delayTimes != 0L) {
-                delay(delayTimes)
-            }
-            binding.llControl.visibility = View.GONE
-        }
-    }
-
-    /**
-     * 显示播放列表
-     */
-    private fun showPlayingList() {
-        LogUtil.logD(TAG, "showPlayingList")
-        binding.llPlayingList.visibility = View.VISIBLE
-    }
-
-    /**
-     * 隐藏播放列表
-     */
-    private fun hidePlayingList() {
-        LogUtil.logD(TAG, "hidePlayingList")
-        binding.llPlayingList.visibility = View.GONE
+        controlViewModel.localVideos
+            .onEach { notifyLocalFilesChanged(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.playingItem
+            .onEach { notifyPlayingItemChanged(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.playStatus
+            .onEach { notifyPlayStatusChanged(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.progress
+            .onEach { notifyProgressChanged(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.playMode
+            .onEach { notifyPlayModeChanged(it) }
+            .launchIn(lifecycleScope)
+        controlViewModel.playError
+            .onEach { notifyPlayErrorChanged(it) }
+            .launchIn(lifecycleScope)
     }
 
     /**
      * 更新页面数据
      */
-//    private fun notifyPlayingListDataChanged(newList: List<UsbFile>) {
-//        notifyDataChangedJob?.cancel()
-//        notifyDataChangedJob = lifecycleScope.launch {
-//            val oldList = multiTypeAdapter.data.filterIsInstance<UsbFile>()
-//            val diffResult = DiffUtils.diffUsbFile(oldList, newList)
-//            if (isActive) {
-//                diffResult.dispatchUpdatesTo(multiTypeAdapter)
-//                multiTypeAdapter.data.clear()
-//                multiTypeAdapter.data.addAll(newList)
-//                LogUtil.logD(TAG, "notifyPlayingListDataChanged: ${oldList.size} -> ${newList.size}")
-//            }
-//        }
-//    }
-    
+    private fun notifyLocalFilesChanged(state: UIState<List<LocalVideo>>) {
+        LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
+        when (state) {
+            is UIState.Error -> { finish() }
+            else -> {}
+        }
+    }
+
     /**
-     * 更新标题
+     * 更新播放项
      */
-    private fun notifyTitle(title: String) {
-        LogUtil.logD(TAG, "notifyTitle: $title")
-        binding.tvTitle.text = title
+    private fun notifyPlayingItemChanged(playingItem: LocalVideo?) {
+        LogUtil.logD(TAG, "notifyPlayingItemChanged: $playingItem")
+        binding.tvTitle.text = playingItem?.displayName
+        binding.tvArtist.text = playingItem?.artist
+        binding.ivCover.load(playingItem) {
+            transformations(CircleCropTransformation())
+            error(R.drawable.ic_album)
+        }
+        if (playingItem != null) {
+            val lrcFile = File(playingItem.path.substringBefore(".") + ".lrc")
+            if (lrcFile.exists()) {
+                binding.lvLyric.loadLyric(lrcFile.readText())
+            } else {
+                binding.lvLyric.loadLyric(null)
+            }
+        }
+    }
+
+    /**
+     * 更新播放状态
+     */
+    private fun notifyPlayStatusChanged(isPlaying: Boolean) {
+        LogUtil.logD(TAG, "notifyPlayStatusChanged: $isPlaying")
+        binding.btnPlayOrPause.isSelected = isPlaying
     }
 
     /**
      * 更新底部播放进度
      */
-    private fun notifyBottomProgress(position: Long, total: Long) {
-        LogUtil.logD(TAG, "notifyBottomProgress: $position / $total, $isSeekBarDragging")
-        if (position < 0 || total <= 0) return
+    private fun notifyProgressChanged(progress: BaseControlViewModel.Progress) {
+//        LogUtil.logD(TAG, "notifyProgressChanged: ${progress.position} / ${progress.duration}, $isSeekBarDragging")
+        if (progress.position < 0 || progress.duration < 0) return
         if (isSeekBarDragging) return
-        binding.sbSeek.max = total.toInt()
-        binding.sbSeek.progress = position.toInt()
-        binding.tvCurrent.text = Utils.formatDuration(position)
-        binding.tvTotal.text = Utils.formatDuration(total)
+        binding.sbSeek.max = progress.duration.toInt()
+        binding.sbSeek.progress = progress.position.toInt()
+        binding.tvPosition.text = Utils.formatDuration(progress.position)
+        binding.tvDuration.text = Utils.formatDuration(progress.duration)
+        // 更新歌词
+        binding.lvLyric.updateTime(progress.position)
+    }
+
+    /**
+     * 更新播放模式
+     */
+    private fun notifyPlayModeChanged(playMode: BaseControlViewModel.PlayMode) {
+        LogUtil.logD(TAG, "notifyPlayModeChanged: $playMode")
+        when (controlViewModel.playMode.value) {
+            BaseControlViewModel.PlayMode.ONE -> {
+                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_one)
+            }
+            BaseControlViewModel.PlayMode.LIST -> {
+                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_list)
+            }
+            BaseControlViewModel.PlayMode.ALL -> {
+                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_all)
+            }
+            BaseControlViewModel.PlayMode.SHUFFLE -> {
+                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_shuffle)
+            }
+        }
+    }
+
+    /**
+     * 更新播放异常
+     */
+    private fun notifyPlayErrorChanged(playError: Throwable) {
+        LogUtil.logW(TAG, "notifyPlayErrorChanged: $playError")
+        showToast(R.string.play_error)
     }
 }

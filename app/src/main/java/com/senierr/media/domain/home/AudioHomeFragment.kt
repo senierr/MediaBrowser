@@ -94,8 +94,14 @@ class AudioHomeFragment : BaseFragment<FragmentHomeAudioBinding>() {
         })
         requireActivity().onBackPressedDispatcher.addCallback(backPressedCallback)
 
-        binding?.layoutTopBar?.btnBack?.onThrottleClick {
+        binding?.btnBack?.onThrottleClick {
+            LogUtil.logD(TAG, "btnBack onClick")
             requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
+
+        binding?.btnPlayAll?.onThrottleClick {
+            LogUtil.logD(TAG, "btnPlayAll onClick")
+            AudioPlayerActivity.start(requireContext(), audioViewModel.currentFolder.value)
         }
 
         binding?.rvList?.layoutManager = GridLayoutManager(requireContext(), 4)
@@ -135,11 +141,11 @@ class AudioHomeFragment : BaseFragment<FragmentHomeAudioBinding>() {
         lifecycleScope.launch {
             // 更新标题
             if (folderPath == null || audioViewModel.getRootFolderPath() == folderPath) {
-                binding?.layoutTopBar?.btnBack?.setGone(true)
-                binding?.layoutTopBar?.tvTitle?.text = getString(R.string.app_name)
+                binding?.btnBack?.setGone(true)
+                binding?.tvTitle?.text = getString(R.string.app_name)
             } else {
-                binding?.layoutTopBar?.btnBack?.setGone(false)
-                binding?.layoutTopBar?.tvTitle?.text = folderPath.substringAfterLast(File.separatorChar)
+                binding?.btnBack?.setGone(false)
+                binding?.tvTitle?.text = folderPath.substringAfterLast(File.separatorChar)
             }
         }
     }
