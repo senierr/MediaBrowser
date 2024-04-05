@@ -16,15 +16,20 @@ class PlayControlService : IPlayControlService {
 
     private val playSessionDao by lazy { DatabaseManager.getDatabase().getPlaySessionDao() }
 
-    override suspend fun savePlaySession(playSession: PlaySession) {
+    override suspend fun savePlaySession(playSession: PlaySession, mediaType: Int) {
         return withContext(Dispatchers.IO) {
-            return@withContext playSessionDao.insertOrReplace(playSession)
+            return@withContext playSessionDao.insertOrReplace(playSession.apply {
+                this.id = mediaType.toLong()
+                this.mediaType = mediaType
+            })
         }
     }
 
-    override suspend fun fetchPlaySession(): PlaySession? {
+    override suspend fun fetchPlaySession(mediaType: Int): PlaySession? {
         return withContext(Dispatchers.IO) {
-            return@withContext playSessionDao.getAll().firstOrNull()
+            return@withContext playSessionDao.getAll().firstOrNull {
+                it.id == mediaType.toLong() && it.mediaType == mediaType
+            }
         }
     }
 }

@@ -92,7 +92,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
             runCatchSilent({
                 LogUtil.logD(TAG, "restore")
                 // 播放会话
-                val playSession = playControlService.fetchPlaySession()
+                val playSession = playControlService.fetchPlaySession(PlaySession.MEDIA_TYPE_AUDIO)
                 LogUtil.logD(TAG, "restore playSession: $playSession")
                 if (playSession == null) return@runCatchSilent
                 setup(playSession.bucketPath, playType = PlayType.NOT_PLAY)
@@ -110,7 +110,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
             runCatchSilent({
                 LogUtil.logD(TAG, "autoPlay")
                 // 播放会话
-                val playSession = playControlService.fetchPlaySession()
+                val playSession = playControlService.fetchPlaySession(PlaySession.MEDIA_TYPE_AUDIO)
                 LogUtil.logD(TAG, "autoPlay playSession: $playSession")
                 if (playSession == null) return@runCatchSilent
                 setup(playSession.bucketPath, playType = PlayType.AUTO_PLAY)
@@ -143,7 +143,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
                 // 若无数据，返回
                 if (audios.isEmpty()) return@runCatchSilent
                 // 播放会话
-                val playSession = playControlService.fetchPlaySession()
+                val playSession = playControlService.fetchPlaySession(PlaySession.MEDIA_TYPE_AUDIO)
                 LogUtil.logD(TAG, "setup playSession: $playSession")
                 currentPlaySession = if (localAudio != null) {
                     if (localAudio.path == playSession?.path) {
@@ -154,7 +154,6 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
                         PlaySession().apply {
                             this.path = localAudio.path
                             this.bucketPath = bucketPath
-                            this.mediaType = PlaySession.MEDIA_TYPE_AUDIO
                         }
                     }
                 } else {
@@ -162,7 +161,6 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
                     playSession?: PlaySession().apply {
                         this.path = audios.first().path
                         this.bucketPath = bucketPath
-                        this.mediaType = PlaySession.MEDIA_TYPE_AUDIO
                     }
                 }
                 savePlaySession()
@@ -208,7 +206,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
                 if (currentPlaySession.bucketPath.isBlank() || currentPlaySession.path.isBlank()) {
                     return@runCatchSilent
                 }
-                playControlService.savePlaySession(currentPlaySession)
+                playControlService.savePlaySession(currentPlaySession, PlaySession.MEDIA_TYPE_AUDIO)
                 if (enableLog) {
                     LogUtil.logD(TAG, "savePlaySession success: $currentPlaySession")
                 }

@@ -73,17 +73,24 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        controlViewModel.onResume()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        controlViewModel.onPause()
+    }
+
     private fun initView() {
+        binding.pvPlayer.player = controlViewModel.getPlayer()
+        binding.pvPlayer.useController = false
+
         // 返回按钮
-        binding.btnClose.onThrottleClick {
+        binding.btnBack.onThrottleClick {
             LogUtil.logD(TAG, "btnClose onClick")
             finish()
-        }
-
-        binding.llContent.onThrottleClick {
-            LogUtil.logD(TAG, "llContent onClick")
-            binding.llContent.setGone(true)
-            binding.lvLyric.setGone(false)
         }
         // 上一首
         binding.btnPlayPrevious.onThrottleClick {
@@ -125,29 +132,6 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
                 controlViewModel.seekTo(binding.sbSeek.progress.toLong())
             }
         })
-        // 播放模式
-        binding.btnPlayMode.onThrottleClick {
-            LogUtil.logD(TAG, "btnPlayMode onClick")
-            val newPlayMode = when (controlViewModel.playMode.value) {
-                BaseControlViewModel.PlayMode.ONE -> {
-                    showToast(R.string.play_mode_list)
-                    BaseControlViewModel.PlayMode.LIST
-                }
-                BaseControlViewModel.PlayMode.LIST -> {
-                    showToast(R.string.play_mode_all)
-                    BaseControlViewModel.PlayMode.ALL
-                }
-                BaseControlViewModel.PlayMode.ALL -> {
-                    showToast(R.string.play_mode_shuffle)
-                    BaseControlViewModel.PlayMode.SHUFFLE
-                }
-                BaseControlViewModel.PlayMode.SHUFFLE -> {
-                    showToast(R.string.play_mode_one)
-                    BaseControlViewModel.PlayMode.ONE
-                }
-            }
-            controlViewModel.setPlayMode(newPlayMode)
-        }
         // 播放列表
         binding.btnPlayingList.onThrottleClick {
             LogUtil.logD(TAG, "showPlayingList")
@@ -156,29 +140,6 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             }
             playingListDialog.showNow(supportFragmentManager, "playingListDialog")
         }
-
-        // 歌词
-        binding.lvLyric.setLabel(getString(R.string.song_have_no_lyric))
-        binding.lvLyric.setNormalTextSize(ScreenUtil.dp2px(this, 14F).toFloat())
-        binding.lvLyric.setNormalColor(getColor(R.color.text_content_sub))
-        binding.lvLyric.setCurrentTextSize(ScreenUtil.dp2px(this, 16F).toFloat())
-        binding.lvLyric.setCurrentColor(getColor(R.color.text_theme))
-        binding.lvLyric.setDraggable(true, object : OnPlayClickListener {
-            override fun onPlayClick(time: Long): Boolean {
-                controlViewModel.seekTo(time)
-                return true
-            }
-        })
-        binding.lvLyric.setTimelineColor(getColor(R.color.window_layer_black))
-        binding.lvLyric.setTimelineTextColor(getColor(R.color.text_title))
-        binding.lvLyric.setTimeTextColor(getColor(R.color.text_title))
-        binding.lvLyric.setOnSingerClickListener(object : OnSingleClickListener {
-            override fun onClick() {
-                LogUtil.logD(TAG, "lvLyric onClick")
-                binding.lvLyric.setGone(true)
-                binding.llContent.setGone(false)
-            }
-        })
     }
 
     private fun initViewModel() {
@@ -193,9 +154,6 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             .launchIn(lifecycleScope)
         controlViewModel.progress
             .onEach { notifyProgressChanged(it) }
-            .launchIn(lifecycleScope)
-        controlViewModel.playMode
-            .onEach { notifyPlayModeChanged(it) }
             .launchIn(lifecycleScope)
         controlViewModel.playError
             .onEach { notifyPlayErrorChanged(it) }
@@ -219,19 +177,6 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     private fun notifyPlayingItemChanged(playingItem: LocalVideo?) {
         LogUtil.logD(TAG, "notifyPlayingItemChanged: $playingItem")
         binding.tvTitle.text = playingItem?.displayName
-        binding.tvArtist.text = playingItem?.artist
-        binding.ivCover.load(playingItem) {
-            transformations(CircleCropTransformation())
-            error(R.drawable.ic_album)
-        }
-        if (playingItem != null) {
-            val lrcFile = File(playingItem.path.substringBefore(".") + ".lrc")
-            if (lrcFile.exists()) {
-                binding.lvLyric.loadLyric(lrcFile.readText())
-            } else {
-                binding.lvLyric.loadLyric(null)
-            }
-        }
     }
 
     /**
@@ -246,36 +191,13 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
      * 更新底部播放进度
      */
     private fun notifyProgressChanged(progress: BaseControlViewModel.Progress) {
-//        LogUtil.logD(TAG, "notifyProgressChanged: ${progress.position} / ${progress.duration}, $isSeekBarDragging")
+        LogUtil.logD(TAG, "notifyProgressChanged: ${progress.position} / ${progress.duration}, $isSeekBarDragging")
         if (progress.position < 0 || progress.duration < 0) return
         if (isSeekBarDragging) return
         binding.sbSeek.max = progress.duration.toInt()
         binding.sbSeek.progress = progress.position.toInt()
         binding.tvPosition.text = Utils.formatDuration(progress.position)
         binding.tvDuration.text = Utils.formatDuration(progress.duration)
-        // 更新歌词
-        binding.lvLyric.updateTime(progress.position)
-    }
-
-    /**
-     * 更新播放模式
-     */
-    private fun notifyPlayModeChanged(playMode: BaseControlViewModel.PlayMode) {
-        LogUtil.logD(TAG, "notifyPlayModeChanged: $playMode")
-        when (controlViewModel.playMode.value) {
-            BaseControlViewModel.PlayMode.ONE -> {
-                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_one)
-            }
-            BaseControlViewModel.PlayMode.LIST -> {
-                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_list)
-            }
-            BaseControlViewModel.PlayMode.ALL -> {
-                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_repeat_all)
-            }
-            BaseControlViewModel.PlayMode.SHUFFLE -> {
-                binding.btnPlayMode.setImageResource(R.drawable.ic_mode_shuffle)
-            }
-        }
     }
 
     /**

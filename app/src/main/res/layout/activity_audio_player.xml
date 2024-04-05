@@ -81,7 +81,6 @@
             android:id="@+id/sb_seek"
             android:progressDrawable="@drawable/seekbar_progress"
             android:thumb="@drawable/shape_seekbar_thumb"
-            android:thumbOffset="@dimen/dp_0"
             android:layout_toEndOf="@id/tv_position"
             android:layout_toStartOf="@id/tv_duration"
             android:paddingStart="@dimen/dp_8"

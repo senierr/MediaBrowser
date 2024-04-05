@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ktx.runCatchSilent
 import com.senierr.base.util.LogUtil
@@ -41,6 +42,8 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
     private val playControlService: IPlayControlService = MediaRepository.getService()
     // 当前会话
     private var currentPlaySession: PlaySession = PlaySession()
+    // 是否临时暂停状态
+    private var isOnPauseStatus = false
 
     override fun onItemCovertToMediaItem(item: LocalVideo): MediaItem {
         val metadata = MediaMetadata.Builder()
@@ -92,7 +95,7 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
             runCatchSilent({
                 LogUtil.logD(TAG, "restore")
                 // 播放会话
-                val playSession = playControlService.fetchPlaySession()
+                val playSession = playControlService.fetchPlaySession(PlaySession.MEDIA_TYPE_VIDEO)
                 LogUtil.logD(TAG, "restore playSession: $playSession")
                 if (playSession == null) return@runCatchSilent
                 setup(playSession.bucketPath, playType = PlayType.NOT_PLAY)
@@ -110,7 +113,7 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
             runCatchSilent({
                 LogUtil.logD(TAG, "autoPlay")
                 // 播放会话
-                val playSession = playControlService.fetchPlaySession()
+                val playSession = playControlService.fetchPlaySession(PlaySession.MEDIA_TYPE_VIDEO)
                 LogUtil.logD(TAG, "autoPlay playSession: $playSession")
                 if (playSession == null) return@runCatchSilent
                 setup(playSession.bucketPath, playType = PlayType.AUTO_PLAY)
@@ -143,7 +146,7 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
                 // 若无数据，返回
                 if (videos.isEmpty()) return@runCatchSilent
                 // 播放会话
-                val playSession = playControlService.fetchPlaySession()
+                val playSession = playControlService.fetchPlaySession(PlaySession.MEDIA_TYPE_VIDEO)
                 LogUtil.logD(TAG, "setup playSession: $playSession")
                 currentPlaySession = if (localVideo != null) {
                     if (localVideo.path == playSession?.path) {
@@ -154,7 +157,6 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
                         PlaySession().apply {
                             this.path = localVideo.path
                             this.bucketPath = bucketPath
-                            this.mediaType = PlaySession.MEDIA_TYPE_VIDEO
                         }
                     }
                 } else {
@@ -162,7 +164,6 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
                     playSession?: PlaySession().apply {
                         this.path = videos.first().path
                         this.bucketPath = bucketPath
-                        this.mediaType = PlaySession.MEDIA_TYPE_VIDEO
                     }
                 }
                 savePlaySession()
@@ -208,7 +209,7 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
                 if (currentPlaySession.bucketPath.isBlank() || currentPlaySession.path.isBlank()) {
                     return@runCatchSilent
                 }
-                playControlService.savePlaySession(currentPlaySession)
+                playControlService.savePlaySession(currentPlaySession, PlaySession.MEDIA_TYPE_VIDEO)
                 if (enableLog) {
                     LogUtil.logD(TAG, "savePlaySession success: $currentPlaySession")
                 }
@@ -216,5 +217,18 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
                 LogUtil.logE(TAG, "savePlaySession error: $it")
             })
         }
+    }
+
+    fun onResume() {
+        LogUtil.logD(TAG, "onResume: $isOnPauseStatus")
+        if (isOnPauseStatus) {
+            play()
+        }
+    }
+
+    fun onPause() {
+        LogUtil.logD(TAG, "onPause")
+        pause(false)
+        isOnPauseStatus = true
     }
 }

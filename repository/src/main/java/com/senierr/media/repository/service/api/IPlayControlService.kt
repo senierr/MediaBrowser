@@ -13,10 +13,10 @@ interface IPlayControlService {
     /**
      * 保存播放会话
      */
-    suspend fun savePlaySession(playSession: PlaySession)
+    suspend fun savePlaySession(playSession: PlaySession, mediaType: Int)
 
     /**
      * 获取播放会话
      */
-    suspend fun fetchPlaySession(): PlaySession?
+    suspend fun fetchPlaySession(mediaType: Int): PlaySession?
 }

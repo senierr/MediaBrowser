@@ -43,7 +43,10 @@
 
         <activity
             android:name="com.senierr.media.domain.video.VideoPlayerActivity"
-            android:theme="@style/Theme.Fullscreen.Black"/>
+            android:launchMode="singleTask"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Fullscreen.Black"
+            tools:ignore="DiscouragedApi" />
 
         <receiver android:name="androidx.media.session.MediaButtonReceiver"
             android:exported="true">

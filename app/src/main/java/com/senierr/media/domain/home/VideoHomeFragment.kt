@@ -22,6 +22,7 @@ import com.senierr.media.databinding.FragmentHomeVideoBinding
 import com.senierr.media.domain.home.viewmodel.VideoViewModel
 import com.senierr.media.domain.home.wrapper.FolderWrapper
 import com.senierr.media.domain.home.wrapper.VideoWrapper
+import com.senierr.media.domain.video.VideoPlayerActivity
 import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.ktx.showContentView
 import com.senierr.media.ktx.showEmptyView
@@ -109,6 +110,7 @@ class VideoHomeFragment : BaseFragment<FragmentHomeVideoBinding>() {
         }
         videoWrapper.setOnItemClickListener { _, _, item ->
             LogUtil.logD(TAG, "video onClick: $item")
+            VideoPlayerActivity.start(requireContext(), videoViewModel.currentFolder.value, item)
         }
 
         multiTypeAdapter.register(folderWrapper)

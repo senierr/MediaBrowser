@@ -19,6 +19,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import com.senierr.base.support.arch.viewmodel.BaseViewModel
 import com.senierr.base.util.LogUtil
 import com.senierr.media.SessionApplication
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -167,7 +168,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
      */
     private fun setupProgressListener() {
         viewModelScope.launchSingle("setupProgressListener") {
-            while (isActive && mediaController.isPlaying) {
+            while (isActive) {
                 var position = mediaController.currentPosition
                 var duration = mediaController.duration
                 if (duration <= 0) {
@@ -180,7 +181,11 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
                 }
                 _progress.emit(Progress(position, duration))
                 // 延迟刷新
-                delay(500)
+                if (mediaController.isPlaying) {
+                    delay(800)
+                } else {
+                    cancel()
+                }
             }
         }
     }
@@ -368,6 +373,11 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     open fun isPlaying(): Boolean {
         return mediaController.isPlaying
     }
+
+    /**
+     * 获取播放器
+     */
+    open fun getPlayer(): Player = mediaController
 
     /**
      * 当前播放索引
