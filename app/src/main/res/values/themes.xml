@@ -1,5 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <style name="SplashScreenTheme" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/window_empty</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_audio</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.MediaBrowser</item>
+    </style>
+
     <style name="Theme.MediaBrowser" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/app_theme</item>
         <item name="colorPrimaryDark">@color/transparent</item>

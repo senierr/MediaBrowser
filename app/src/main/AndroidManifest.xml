@@ -25,6 +25,7 @@
         tools:targetApi="33">
         <activity
             android:name=".domain.home.MainActivity"
+            android:theme="@style/SplashScreenTheme"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
