@@ -14,6 +14,7 @@ import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ktx.onThrottleClick
 import com.senierr.base.support.ktx.setGone
 import com.senierr.base.support.ktx.showToast
+import com.senierr.base.support.ktx.viewModel
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
@@ -21,7 +22,6 @@ import com.senierr.media.databinding.ActivityVideoPlayerBinding
 import com.senierr.media.domain.common.BaseControlViewModel
 import com.senierr.media.domain.video.viewmodel.VideoControlViewModel
 import com.senierr.media.domain.video.wrapper.PlayingListWrapper
-import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalAudio
 import com.senierr.media.repository.entity.LocalVideo
 import com.senierr.media.utils.DiffUtils
@@ -30,7 +30,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 /**
  * 视频播放页面
@@ -41,7 +40,6 @@ import kotlinx.coroutines.launch
 class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
 
     companion object {
-        private const val INTERVAL_HIDE_SHORT = 1 * 1000L
         private const val INTERVAL_CONTROL_BAR_HIDE = 5 * 1000L
 
         fun start(context: Context) {
@@ -57,9 +55,9 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     }
 
     private val multiTypeAdapter = MultiTypeAdapter()
-    private val playingListWrapper = PlayingListWrapper()
+    private val playingListWrapper = PlayingListWrapper(this)
 
-    private val controlViewModel: VideoControlViewModel by applicationViewModel()
+    private val controlViewModel: VideoControlViewModel by viewModel()
 
     // 进度条是否处于拖动状态
     private var isSeekBarDragging = false
@@ -104,7 +102,6 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             }
         }
         // 播放器
-        binding.pvPlayer.player = controlViewModel.getPlayer()
         binding.pvPlayer.useController = false
 
         // 返回按钮
@@ -181,6 +178,9 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     }
 
     private fun initViewModel() {
+        controlViewModel.initialize()
+        binding.pvPlayer.player = controlViewModel.getPlayer()
+
         controlViewModel.localVideos
             .onEach { notifyLocalFilesChanged(it) }
             .launchIn(lifecycleScope)

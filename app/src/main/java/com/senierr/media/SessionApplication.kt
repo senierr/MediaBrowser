@@ -17,7 +17,6 @@ import coil.memory.MemoryCache
 import com.senierr.base.util.LogUtil
 import com.senierr.media.domain.audio.service.AudioMediaBrowserService
 import com.senierr.media.domain.audio.viewmodel.AudioControlViewModel
-import com.senierr.media.domain.video.viewmodel.VideoControlViewModel
 import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.MediaRepository
 import com.senierr.media.utils.LocalAudioFetcher
@@ -41,7 +40,6 @@ class SessionApplication : Application(), ImageLoaderFactory, ViewModelStoreOwne
     private val _viewModelStore = ViewModelStore()
 
     private val audioControlViewModel: AudioControlViewModel by applicationViewModel()
-    private val videoControlViewModel: VideoControlViewModel by applicationViewModel()
 
     override fun onCreate() {
         super.onCreate()
@@ -54,8 +52,6 @@ class SessionApplication : Application(), ImageLoaderFactory, ViewModelStoreOwne
 
         audioControlViewModel.initialize()
         audioControlViewModel.restore()
-
-        videoControlViewModel.initialize()
     }
 
     override val viewModelStore: ViewModelStore

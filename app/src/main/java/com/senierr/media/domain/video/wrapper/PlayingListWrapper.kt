@@ -1,16 +1,17 @@
 package com.senierr.media.domain.video.wrapper
 
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.senierr.adapter.internal.ViewHolder
 import com.senierr.adapter.internal.ViewHolderWrapper
+import com.senierr.base.support.ktx.viewModel
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
 import com.senierr.media.databinding.ItemVideoPlayingListBinding
 import com.senierr.media.domain.video.viewmodel.VideoControlViewModel
-import com.senierr.media.ktx.applicationViewModel
 import com.senierr.media.repository.entity.LocalVideo
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -21,7 +22,7 @@ import kotlinx.coroutines.flow.onEach
  * @author chunjiezhou
  * @date 2021/08/05
  */
-class PlayingListWrapper : ViewHolderWrapper<LocalVideo>(R.layout.item_video_playing_list) {
+class PlayingListWrapper(viewModelStoreOwner: ViewModelStoreOwner) : ViewHolderWrapper<LocalVideo>(R.layout.item_video_playing_list) {
 
     companion object {
         private const val TAG = "PlayingListWrapper"
@@ -29,7 +30,7 @@ class PlayingListWrapper : ViewHolderWrapper<LocalVideo>(R.layout.item_video_pla
         private const val PAYLOAD_REFRESH_PLAYING_ITEM = "refreshPlayingItem"
     }
 
-    private val controlViewModel: VideoControlViewModel by applicationViewModel()
+    private val controlViewModel: VideoControlViewModel by viewModelStoreOwner.viewModel()
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
