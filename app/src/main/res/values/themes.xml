@@ -2,7 +2,7 @@
 
     <style name="SplashScreenTheme" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/window_empty</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_audio</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="windowSplashScreenAnimationDuration">1000</item>
         <item name="postSplashScreenTheme">@style/Theme.MediaBrowser</item>
     </style>

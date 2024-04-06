@@ -255,7 +255,7 @@ class AudioMediaSession(
                 setContentText(description.subtitle)
                 setSubText(description.description)
                 setLargeIcon(description.iconBitmap)
-                setSmallIcon(R.mipmap.ic_launcher)
+                setSmallIcon(R.mipmap.ic_launcher_notification)
             }
 
             addAction(NotificationCompat.Action(
