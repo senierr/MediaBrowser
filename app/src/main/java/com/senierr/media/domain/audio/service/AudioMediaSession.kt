@@ -159,7 +159,7 @@ class AudioMediaSession(
     private fun notifyProgressChanged(progress: BaseControlViewModel.Progress) {
         val playingItem = controlViewModel.playingItem.value?: return
         // 更新总时长
-        val currentDuration = controller.metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
+        val currentDuration = controller.metadata?.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
         if (currentDuration != progress.duration) {
             updateMetadataJob?.cancel()
             updateMetadataJob = launch {
@@ -249,12 +249,14 @@ class AudioMediaSession(
             setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
             val mediaMetadata = controller.metadata
-            val description = mediaMetadata.description
-            setContentTitle(description.title)
-            setContentText(description.subtitle)
-            setSubText(description.description)
-            setLargeIcon(description.iconBitmap)
-            setSmallIcon(R.mipmap.ic_launcher)
+            if (mediaMetadata != null) {
+                val description = mediaMetadata.description
+                setContentTitle(description.title)
+                setContentText(description.subtitle)
+                setSubText(description.description)
+                setLargeIcon(description.iconBitmap)
+                setSmallIcon(R.mipmap.ic_launcher)
+            }
 
             addAction(NotificationCompat.Action(
                 R.drawable.ic_skip_previous,

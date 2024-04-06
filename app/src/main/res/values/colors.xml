@@ -15,6 +15,7 @@
     <color name="window_empty">#F5F5F5</color>
     <color name="window_black">#000000</color>
     <color name="window_layer_black">#33000000</color>
+    <color name="window_dialog_mask">#88000000</color>
     <!-- 分割线色 -->
     <color name="divider_normal">#C0C7CC</color>
     <!-- 文字色 -->

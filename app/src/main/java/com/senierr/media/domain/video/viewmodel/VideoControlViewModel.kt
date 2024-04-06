@@ -221,8 +221,17 @@ class VideoControlViewModel : BaseControlViewModel<LocalVideo>() {
 
     fun onResume() {
         LogUtil.logD(TAG, "onResume: $isOnPauseStatus")
-        if (isOnPauseStatus) {
-            play()
+        if (!isOnPauseStatus) return
+        viewModelScope.launchSingle("autoPlay") {
+            runCatchSilent({
+                val playSession = playControlService.fetchPlaySession(PlaySession.MEDIA_TYPE_VIDEO)
+                LogUtil.logD(TAG, "onResume playSession: $playSession")
+                if (playSession?.isPlaying == true) {
+                    play()
+                }
+            }, {
+                LogUtil.logE(TAG, "onResume error: ${Log.getStackTraceString(it)}")
+            })
         }
     }
 

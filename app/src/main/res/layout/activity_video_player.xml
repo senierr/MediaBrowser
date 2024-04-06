@@ -7,60 +7,77 @@
 
     <androidx.media3.ui.PlayerView
         android:id="@+id/pv_player"
+        tools:visibility="invisible"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <ImageView
-        android:id="@+id/btn_back"
-        android:src="@drawable/ic_chevron_back"
-        app:tint="@color/btn_white"
-        android:padding="@dimen/dp_16"
-        android:layout_width="@dimen/dp_56"
-        android:layout_height="@dimen/dp_56"/>
-
-    <TextView
-        android:id="@+id/tv_title"
-        tools:text="标题名"
-        android:textSize="@dimen/sp_15"
-        android:textColor="@color/text_white"
-        android:maxLines="1"
-        android:ellipsize="end"
+    <LinearLayout
+        android:id="@+id/ll_top_bar"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_toEndOf="@id/btn_back"
-        android:layout_marginStart="@dimen/dp_8"
-        android:layout_marginEnd="@dimen/dp_16"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/dp_56"/>
+        android:layout_height="@dimen/dp_56">
 
-    <ImageView
-        android:id="@+id/btn_play_previous"
-        android:src="@drawable/ic_skip_previous"
-        android:layout_toStartOf="@id/btn_play_or_pause"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="@dimen/dp_32"
-        android:padding="@dimen/dp_12"
-        android:layout_width="@dimen/dp_72"
-        android:layout_height="@dimen/dp_72"/>
+        <ImageView
+            android:id="@+id/btn_back"
+            android:src="@drawable/ic_chevron_back"
+            app:tint="@color/btn_white"
+            android:padding="@dimen/dp_16"
+            android:layout_width="@dimen/dp_56"
+            android:layout_height="@dimen/dp_56"/>
 
-    <ImageView
-        android:id="@+id/btn_play_or_pause"
-        android:src="@drawable/selector_btn_play_or_pause"
-        android:layout_centerInParent="true"
-        android:layout_width="@dimen/dp_72"
-        android:layout_height="@dimen/dp_72"/>
+        <TextView
+            android:id="@+id/tv_title"
+            tools:text="标题名"
+            android:textSize="@dimen/sp_15"
+            android:textColor="@color/text_white"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="@dimen/dp_8"
+            android:layout_marginEnd="@dimen/dp_16"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
 
-    <ImageView
-        android:id="@+id/btn_play_next"
-        android:src="@drawable/ic_skip_next"
-        android:layout_toEndOf="@id/btn_play_or_pause"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="@dimen/dp_32"
-        android:padding="@dimen/dp_12"
-        android:layout_width="@dimen/dp_72"
-        android:layout_height="@dimen/dp_72"/>
+    <LinearLayout
+        android:id="@+id/ll_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_above="@id/rl_control_bottom"
+        android:layout_below="@id/ll_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/btn_play_previous"
+            android:src="@drawable/ic_skip_previous"
+            android:padding="@dimen/dp_24"
+            android:layout_width="@dimen/dp_100"
+            android:layout_height="@dimen/dp_100"/>
+
+        <ImageView
+            android:id="@+id/btn_play_or_pause"
+            android:src="@drawable/selector_btn_play_or_pause"
+            android:padding="@dimen/dp_12"
+            android:layout_marginStart="@dimen/dp_88"
+            android:layout_marginEnd="@dimen/dp_88"
+            android:layout_width="@dimen/dp_100"
+            android:layout_height="@dimen/dp_100"/>
+
+        <ImageView
+            android:id="@+id/btn_play_next"
+            android:src="@drawable/ic_skip_next"
+            android:padding="@dimen/dp_24"
+            android:layout_width="@dimen/dp_100"
+            android:layout_height="@dimen/dp_100"/>
+    </LinearLayout>
 
     <RelativeLayout
         android:id="@+id/rl_control_bottom"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="@dimen/dp_56">
@@ -110,4 +127,19 @@
             android:layout_width="@dimen/dp_56"
             android:layout_height="@dimen/dp_56"/>
     </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/fl_playing_list"
+        android:visibility="gone"
+        android:background="@color/window_dialog_mask"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_playing_list"
+            android:background="@color/window_content"
+            android:layout_gravity="end"
+            android:layout_width="@dimen/dp_300"
+            android:layout_height="match_parent"/>
+    </FrameLayout>
 </RelativeLayout>

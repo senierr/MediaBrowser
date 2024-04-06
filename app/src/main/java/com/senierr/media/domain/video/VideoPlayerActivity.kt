@@ -3,31 +3,34 @@ package com.senierr.media.domain.video
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
-import coil.load
-import coil.transform.CircleCropTransformation
-import com.dirror.lyricviewx.OnPlayClickListener
-import com.dirror.lyricviewx.OnSingleClickListener
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.senierr.adapter.internal.MultiTypeAdapter
 import com.senierr.base.support.arch.viewmodel.state.UIState
 import com.senierr.base.support.ktx.onThrottleClick
 import com.senierr.base.support.ktx.setGone
 import com.senierr.base.support.ktx.showToast
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
-import com.senierr.base.util.ScreenUtil
 import com.senierr.media.R
 import com.senierr.media.databinding.ActivityVideoPlayerBinding
-import com.senierr.media.domain.audio.dialog.PlayingListDialog
 import com.senierr.media.domain.common.BaseControlViewModel
 import com.senierr.media.domain.video.viewmodel.VideoControlViewModel
+import com.senierr.media.domain.video.wrapper.PlayingListWrapper
 import com.senierr.media.ktx.applicationViewModel
+import com.senierr.media.repository.entity.LocalAudio
 import com.senierr.media.repository.entity.LocalVideo
+import com.senierr.media.utils.DiffUtils
 import com.senierr.media.utils.Utils
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import java.io.File
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * 视频播放页面
@@ -38,6 +41,9 @@ import java.io.File
 class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
 
     companion object {
+        private const val INTERVAL_HIDE_SHORT = 1 * 1000L
+        private const val INTERVAL_CONTROL_BAR_HIDE = 5 * 1000L
+
         fun start(context: Context) {
             context.startActivity(Intent(context, VideoPlayerActivity::class.java))
         }
@@ -49,6 +55,9 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             })
         }
     }
+
+    private val multiTypeAdapter = MultiTypeAdapter()
+    private val playingListWrapper = PlayingListWrapper()
 
     private val controlViewModel: VideoControlViewModel by applicationViewModel()
 
@@ -63,6 +72,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
         super.onCreate(savedInstanceState)
         initView()
         initViewModel()
+        hideControlBar()
         // 主动播放
         val bucketPath: String? = intent.getStringExtra("bucketPath")
         val localVideo = intent.getParcelableExtra<LocalVideo>("localVideo")
@@ -84,6 +94,16 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     }
 
     private fun initView() {
+        // 根布局
+        binding.root.onThrottleClick {
+            LogUtil.logD(TAG, "root onClick")
+            if (isControlBarShowed()) {
+                hideControlBar()
+            } else {
+                showControlBar()
+            }
+        }
+        // 播放器
         binding.pvPlayer.player = controlViewModel.getPlayer()
         binding.pvPlayer.useController = false
 
@@ -100,6 +120,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             } else {
                 showToast(R.string.has_no_previous)
             }
+            showControlBar()
         }
         // 播放/暂停
         binding.btnPlayOrPause.onThrottleClick {
@@ -109,6 +130,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             } else {
                 controlViewModel.play()
             }
+            showControlBar()
         }
         // 下一首
         binding.btnPlayNext.onThrottleClick {
@@ -118,10 +140,15 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
             } else {
                 showToast(R.string.has_no_next)
             }
+            showControlBar()
         }
         // 进度条
         binding.sbSeek.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {}
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                if (p2 && isSeekBarDragging) {
+                    showControlBar()
+                }
+            }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
                 isSeekBarDragging = true
@@ -135,11 +162,22 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
         // 播放列表
         binding.btnPlayingList.onThrottleClick {
             LogUtil.logD(TAG, "showPlayingList")
-            val playingListDialog = PlayingListDialog { position, _ ->
-                controlViewModel.play(position)
-            }
-            playingListDialog.showNow(supportFragmentManager, "playingListDialog")
+            binding.flPlayingList.setGone(false)
+            hideControlBar()
         }
+
+        binding.flPlayingList.onThrottleClick {
+            LogUtil.logD(TAG, "showPlayingList")
+            binding.flPlayingList.setGone(true)
+        }
+        binding.rvPlayingList.layoutManager = LinearLayoutManager(this)
+        binding.rvPlayingList.setHasFixedSize(true)
+        playingListWrapper.setOnItemClickListener { _, position, item ->
+            LogUtil.logD(TAG, "playingListWrapper onClick: $item")
+            controlViewModel.play(position)
+        }
+        multiTypeAdapter.register(playingListWrapper)
+        binding.rvPlayingList.adapter = multiTypeAdapter
     }
 
     private fun initViewModel() {
@@ -166,6 +204,20 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     private fun notifyLocalFilesChanged(state: UIState<List<LocalVideo>>) {
         LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
         when (state) {
+            is UIState.Content -> {
+                lifecycleScope.launchSingle("notifyLocalFilesChanged") {
+                    val oldList = multiTypeAdapter.data.filterIsInstance<LocalAudio>()
+                    val newList = state.value
+                    val diffResult = DiffUtils.diffLocalFile(oldList, newList)
+                    if (isActive) {
+                        // 更新播放列表
+                        multiTypeAdapter.data.clear()
+                        multiTypeAdapter.data.addAll(newList)
+                        diffResult.dispatchUpdatesTo(multiTypeAdapter)
+                        Log.d(TAG, "notifyLocalFilesChanged: ${oldList.size} -> ${newList.size}")
+                    }
+                }
+            }
             is UIState.Error -> { finish() }
             else -> {}
         }
@@ -206,5 +258,52 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     private fun notifyPlayErrorChanged(playError: Throwable) {
         LogUtil.logW(TAG, "notifyPlayErrorChanged: $playError")
         showToast(R.string.play_error)
+    }
+
+    /**
+     * 控制栏是否显示
+     */
+    private fun isControlBarShowed() = binding.llTopBar.visibility == View.VISIBLE
+
+    /**
+     * 显示控制栏
+     */
+    private fun showControlBar() {
+        LogUtil.logD(TAG, "showControlBar")
+        binding.llTopBar.visibility = View.VISIBLE
+        binding.llContent.visibility = View.VISIBLE
+        binding.rlControlBottom.visibility = View.VISIBLE
+        hideControlBar(INTERVAL_CONTROL_BAR_HIDE)
+    }
+
+    /**
+     * 隐藏控制栏
+     */
+    private fun hideControlBar(delayTimes: Long = 0) {
+        LogUtil.logD(TAG, "hideControlBar: $delayTimes")
+        lifecycleScope.launchSingle("hideControlBar") {
+            if (delayTimes > 0L) {
+                delay(delayTimes)
+            }
+            binding.llTopBar.visibility = View.GONE
+            binding.llContent.visibility = View.GONE
+            binding.rlControlBottom.visibility = View.GONE
+        }
+    }
+
+    /**
+     * 显示播放列表
+     */
+    private fun showPlayingList() {
+        LogUtil.logD(TAG, "showPlayingList")
+        binding.flPlayingList.visibility = View.VISIBLE
+    }
+
+    /**
+     * 隐藏播放列表
+     */
+    private fun hidePlayingList() {
+        LogUtil.logD(TAG, "hidePlayingList")
+        binding.flPlayingList.visibility = View.GONE
     }
 }

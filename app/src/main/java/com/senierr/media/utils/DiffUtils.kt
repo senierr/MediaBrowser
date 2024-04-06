@@ -33,32 +33,32 @@ object DiffUtils {
                 override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                     val oldItem = oldList[oldItemPosition]
                     val newItem = newList[newItemPosition]
-                    if (oldItem is LocalFolder && newItem is LocalFolder) {
-                        return oldItem.path == newItem.path
+                    return if (oldItem is LocalFolder && newItem is LocalFolder) {
+                        oldItem.path == newItem.path
                     } else if (oldItem is LocalImage && newItem is LocalImage) {
-                        return oldItem.path == newItem.path
+                        oldItem.path == newItem.path
                     } else if (oldItem is LocalAudio && newItem is LocalAudio) {
-                        return oldItem.path == newItem.path
+                        oldItem.path == newItem.path
                     } else if (oldItem is LocalVideo && newItem is LocalVideo) {
-                        return oldItem.path == newItem.path
+                        oldItem.path == newItem.path
                     } else {
-                        return false
+                        false
                     }
                 }
 
                 override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                     val oldItem = oldList[oldItemPosition]
                     val newItem = newList[newItemPosition]
-                    if (oldItem is LocalFolder && newItem is LocalFolder) {
-                        return oldItem.path == newItem.path
+                    return if (oldItem is LocalFolder && newItem is LocalFolder) {
+                        oldItem.path == newItem.path
                     } else if (oldItem is LocalImage && newItem is LocalImage) {
-                        return oldItem.path == newItem.path
+                        oldItem.path == newItem.path
                     } else if (oldItem is LocalAudio && newItem is LocalAudio) {
-                        return oldItem.path == newItem.path
+                        oldItem.path == newItem.path
                     } else if (oldItem is LocalVideo && newItem is LocalVideo) {
-                        return oldItem.path == newItem.path
+                        oldItem.path == newItem.path
                     } else {
-                        return false
+                        false
                     }
                 }
             }, false)

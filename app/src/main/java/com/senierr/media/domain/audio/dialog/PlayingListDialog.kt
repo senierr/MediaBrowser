@@ -87,9 +87,9 @@ class PlayingListDialog(
                     val diffResult = DiffUtils.diffLocalFile(oldList, newList)
                     if (isActive) {
                         // 更新播放列表
-                        diffResult.dispatchUpdatesTo(multiTypeAdapter)
                         multiTypeAdapter.data.clear()
                         multiTypeAdapter.data.addAll(newList)
+                        diffResult.dispatchUpdatesTo(multiTypeAdapter)
                         Log.d(TAG, "notifyLocalFilesChanged: ${oldList.size} -> ${newList.size}")
                     }
                 }

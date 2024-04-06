@@ -229,11 +229,17 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
         if (mediaController.currentMediaItemIndex != position) {
             mediaController.seekToDefaultPosition(position)
         }
-        if (mediaController.playbackState == Player.STATE_READY) {
-            mediaController.play()
-        } else {
-            mediaController.playWhenReady = true
-            mediaController.prepare()
+        when (mediaController.playbackState) {
+            Player.STATE_READY -> {
+                mediaController.play()
+            }
+            Player.STATE_ENDED -> {
+                mediaController.seekToDefaultPosition()
+            }
+            else -> {
+                mediaController.playWhenReady = true
+                mediaController.prepare()
+            }
         }
     }
 
@@ -247,11 +253,17 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
             LogUtil.logD(TAG, "requestAudioFocus: false")
             return
         }
-        if (mediaController.playbackState == Player.STATE_READY) {
-            mediaController.play()
-        } else {
-            mediaController.playWhenReady = true
-            mediaController.prepare()
+        when (mediaController.playbackState) {
+            Player.STATE_READY -> {
+                mediaController.play()
+            }
+            Player.STATE_ENDED -> {
+                mediaController.seekToDefaultPosition()
+            }
+            else -> {
+                mediaController.playWhenReady = true
+                mediaController.prepare()
+            }
         }
     }
 
