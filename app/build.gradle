@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'AutoDimens'
 }
 
 android {
@@ -33,6 +34,17 @@ android {
     buildFeatures {
         viewBinding true
     }
+}
+
+AutoDimens {
+    design {
+        width = 1920
+        height = 1080
+    }
+    target {
+        // ignore
+    }
+    outputFileName = "dimens_auto.xml"
 }
 
 dependencies {
