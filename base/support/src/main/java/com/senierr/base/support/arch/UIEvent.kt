@@ -1,4 +1,4 @@
-package com.senierr.base.support.arch.viewmodel.event
+package com.senierr.base.support.arch
 
 /**
  * 执行事件

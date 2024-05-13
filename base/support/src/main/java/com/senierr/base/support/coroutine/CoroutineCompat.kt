@@ -1,26 +1,35 @@
-package com.senierr.base.support.arch.viewmodel
+package com.senierr.base.support.coroutine
 
-import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
- * ViewModel基类
+ * 协程支持类
  *
  * @author senierr_zhou
- * @date 2023/08/08
+ * @date 2024/05/13
  */
-open class BaseViewModel : ViewModel() {
+class CoroutineCompat(
+    private val coroutineScope: CoroutineScope,
+    private val jobMap: HashMap<String, Job> = hashMapOf()
+) {
 
-    protected val TAG: String = this.javaClass.simpleName
+    init {
+        coroutineScope.launch {
+            try {
+                awaitCancellation()
+            } finally {
+                jobMap.clear()
+            }
+        }
+    }
 
-    private val jobMap = hashMapOf<String, Job>()
-
-    protected fun CoroutineScope.launchSingle(
+    fun launchSingle(
         tag: String,
         context: CoroutineContext = EmptyCoroutineContext,
         start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -30,14 +39,9 @@ open class BaseViewModel : ViewModel() {
         val oldJob = jobMap[tag]
         oldJob?.let { oldJob.cancel() }
         // 执行新任务
-        val newJob = launch(context, start, block)
+        val newJob = coroutineScope.launch(context, start, block)
         // 缓存新任务
         jobMap[tag] = newJob
         return newJob
-    }
-
-    override fun onCleared() {
-        jobMap.clear()
-        super.onCleared()
     }
 }

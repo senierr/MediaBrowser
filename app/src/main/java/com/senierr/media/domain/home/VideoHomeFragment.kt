@@ -9,11 +9,13 @@ import androidx.activity.OnBackPressedCallback
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.senierr.adapter.internal.MultiTypeAdapter
-import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.onThrottleClick
-import com.senierr.base.support.ktx.setGone
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.CoroutineCompat
+import com.senierr.base.support.coroutine.ktx.onThrottleClick
+import com.senierr.base.support.coroutine.ktx.setGone
 import com.senierr.base.support.ui.BaseFragment
 import com.senierr.base.support.ui.recyclerview.GridItemDecoration
 import com.senierr.base.util.LogUtil
@@ -48,6 +50,7 @@ class VideoHomeFragment : BaseFragment<FragmentHomeVideoBinding>() {
     private val folderWrapper = FolderWrapper()
     private val videoWrapper = VideoWrapper()
 
+    private val coroutineCompat = CoroutineCompat(lifecycleScope)
     private val videoViewModel by applicationViewModel<VideoViewModel>()
 
     override fun createViewBinding(inflater: LayoutInflater, container: ViewGroup?): FragmentHomeVideoBinding {
@@ -158,7 +161,7 @@ class VideoHomeFragment : BaseFragment<FragmentHomeVideoBinding>() {
             }
             is UIState.Content -> {
                 binding?.msvState?.showContentView()
-                lifecycleScope.launchSingle("notifyLocalFilesChanged") {
+                coroutineCompat.launchSingle("notifyLocalFilesChanged") {
                     val oldList = multiTypeAdapter.data.filterIsInstance<LocalFile>()
                     val diffResult = DiffUtils.diffLocalFile(oldList, state.value)
                     if (isActive) {

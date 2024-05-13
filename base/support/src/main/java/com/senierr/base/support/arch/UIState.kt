@@ -1,4 +1,4 @@
-package com.senierr.base.support.arch.viewmodel.state
+package com.senierr.base.support.arch
 
 /**
  * 页面状态

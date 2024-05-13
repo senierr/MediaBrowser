@@ -10,8 +10,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
 import com.github.chrisbanes.photoview.OnPhotoTapListener
 import com.senierr.adapter.internal.MultiTypeAdapter
-import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.onThrottleClick
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.CoroutineCompat
+import com.senierr.base.support.coroutine.ktx.onThrottleClick
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
 import com.senierr.media.databinding.ActivityImagePreviewBinding
@@ -43,6 +44,8 @@ class ImagePreviewActivity : BaseActivity<ActivityImagePreviewBinding>() {
             })
         }
     }
+
+    private val coroutineCompat = CoroutineCompat(lifecycleScope)
 
     // 当前浏览图片IDs
     private var currentImageId: Long = 0
@@ -106,7 +109,7 @@ class ImagePreviewActivity : BaseActivity<ActivityImagePreviewBinding>() {
      * 隐藏控制栏
      */
     private fun hideControlBar(delayTimes: Long) {
-        lifecycleScope.launchSingle("hideControlBar") {
+        coroutineCompat.launchSingle("hideControlBar") {
             delay(delayTimes)
             binding.layoutTopBar.root.visibility = View.GONE
         }
@@ -130,7 +133,7 @@ class ImagePreviewActivity : BaseActivity<ActivityImagePreviewBinding>() {
         LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
         when (state) {
             is UIState.Content -> {
-                lifecycleScope.launchSingle("notifyLocalFilesChanged") {
+                coroutineCompat.launchSingle("notifyLocalFilesChanged") {
                     val oldList = multiTypeAdapter.data.filterIsInstance<LocalImage>()
                     val newList = state.value.filterIsInstance<LocalImage>()
                     val diffResult = DiffUtils.diffLocalFile(oldList, newList)

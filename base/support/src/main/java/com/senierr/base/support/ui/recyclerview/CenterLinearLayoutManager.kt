@@ -14,7 +14,7 @@ import kotlin.math.abs
  * @author senierr_zhou
  * @date 2023/07/30
  */
-class CenterLayoutManager : LinearLayoutManager {
+class CenterLinearLayoutManager : LinearLayoutManager {
 
     companion object {
         // 显示到中间的动画时长
@@ -28,28 +28,18 @@ class CenterLayoutManager : LinearLayoutManager {
 
     constructor(context: Context) : super(context)
 
-    constructor(
-        context: Context,
-        attrs: AttributeSet?,
-        defStyleAttr: Int,
-        defStyleRes: Int
-    ) : super(context, attrs, defStyleAttr, defStyleRes)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    constructor(
-        context: Context,
-        orientation: Int,
-        reverseLayout: Boolean
-    ) : super(context, orientation, reverseLayout)
+    constructor(context: Context, orientation: Int, reverseLayout: Boolean) : super(context, orientation, reverseLayout)
 
     override fun smoothScrollToPosition(recyclerView: RecyclerView, state: RecyclerView.State, position: Int) {
-        val smoothScroller: CenterSmoothScroller =
-            object : CenterSmoothScroller(recyclerView.context) {
-                override fun calculateSpeedPerPixel(displayMetrics: DisplayMetrics): Float {
-                    // 重新计算相近两个位置的滚动间隔
-                    val newDuration = duration / abs(targetPosition - lastPosition)
-                    return newDuration / displayMetrics.densityDpi
-                }
+        val smoothScroller: CenterSmoothScroller = object : CenterSmoothScroller(recyclerView.context) {
+            override fun calculateSpeedPerPixel(displayMetrics: DisplayMetrics): Float {
+                // 重新计算相近两个位置的滚动间隔
+                val newDuration = duration / abs(targetPosition - lastPosition)
+                return newDuration / displayMetrics.densityDpi
             }
+        }
         smoothScroller.targetPosition = position
         lastPosition = targetPosition
         targetPosition = position

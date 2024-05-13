@@ -7,20 +7,18 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.senierr.base.support.arch.viewmodel.BaseViewModel
-import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.runCatchSilent
+import com.senierr.base.support.arch.BaseViewModel
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.CoroutineCompat
+import com.senierr.base.support.coroutine.ktx.runCatchSilent
 import com.senierr.base.util.LogUtil
 import com.senierr.media.SessionApplication
 import com.senierr.media.repository.MediaRepository
 import com.senierr.media.repository.entity.LocalFile
 import com.senierr.media.repository.service.api.IMediaService
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 /**
  * 视频首页
@@ -30,6 +28,8 @@ import kotlinx.coroutines.launch
  */
 class VideoViewModel : BaseViewModel() {
 
+    private val coroutineCompat = CoroutineCompat(viewModelScope)
+    
     // 当前目录
     private val _currentFolder = MutableStateFlow<String>(Environment.getExternalStorageDirectory().path)
     val currentFolder = _currentFolder.asStateFlow()
@@ -71,7 +71,7 @@ class VideoViewModel : BaseViewModel() {
      * 拉取媒体数据（文件夹 + 数据）
      */
     fun fetchLocalFiles(bucketPath: String) {
-        viewModelScope.launchSingle("fetchLocalFiles") {
+        coroutineCompat.launchSingle("fetchLocalFiles") {
             LogUtil.logD(TAG, "fetchLocalFiles: $bucketPath")
             if (bucketPath.isBlank()) return@launchSingle
             runCatchSilent({

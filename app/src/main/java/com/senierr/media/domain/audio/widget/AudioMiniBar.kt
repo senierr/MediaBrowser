@@ -11,8 +11,8 @@ import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import coil.transform.CircleCropTransformation
-import com.senierr.base.support.ktx.onThrottleClick
-import com.senierr.base.support.ktx.showToast
+import com.senierr.base.support.coroutine.ktx.onThrottleClick
+import com.senierr.base.support.coroutine.ktx.showToast
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
 import com.senierr.media.databinding.LayoutAudioPlayerBinding

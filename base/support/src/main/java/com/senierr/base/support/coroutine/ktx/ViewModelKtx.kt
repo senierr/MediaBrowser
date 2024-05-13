@@ -1,4 +1,4 @@
-package com.senierr.base.support.ktx
+package com.senierr.base.support.coroutine.ktx
 
 import android.app.Application
 import androidx.annotation.MainThread
@@ -53,6 +53,23 @@ inline fun <reified VM : ViewModel> ViewModelStoreOwner.androidViewModel(applica
                 val viewModel = cached
                 return viewModel ?: ViewModelProvider(
                     this@androidViewModel, ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+                )[VM::class.java].also { cached = it }
+            }
+
+        override fun isInitialized() = cached != null
+    }
+}
+
+@MainThread
+inline fun <reified VM : ViewModel> Fragment.activityAndroidViewModel(application: Application): Lazy<VM> {
+    return object : Lazy<VM> {
+        private var cached: VM? = null
+
+        override val value: VM
+            get() {
+                val viewModel = cached
+                return viewModel ?: ViewModelProvider(
+                    requireActivity(), ViewModelProvider.AndroidViewModelFactory.getInstance(application)
                 )[VM::class.java].also { cached = it }
             }
 

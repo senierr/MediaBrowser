@@ -19,8 +19,8 @@ import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
 import coil.imageLoader
 import coil.request.ImageRequest
-import com.senierr.base.support.ktx.runCatchSilent
-import com.senierr.base.support.ktx.showToast
+import com.senierr.base.support.coroutine.ktx.runCatchSilent
+import com.senierr.base.support.coroutine.ktx.showToast
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
 import com.senierr.media.domain.audio.AudioPlayerActivity

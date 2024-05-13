@@ -1,4 +1,4 @@
-package com.senierr.base.support.ktx
+package com.senierr.base.support.coroutine.ktx
 
 import android.content.Context
 import android.widget.Toast

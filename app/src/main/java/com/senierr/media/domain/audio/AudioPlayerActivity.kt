@@ -10,10 +10,10 @@ import coil.load
 import coil.transform.CircleCropTransformation
 import com.dirror.lyricviewx.OnPlayClickListener
 import com.dirror.lyricviewx.OnSingleClickListener
-import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.onThrottleClick
-import com.senierr.base.support.ktx.setGone
-import com.senierr.base.support.ktx.showToast
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.ktx.onThrottleClick
+import com.senierr.base.support.coroutine.ktx.setGone
+import com.senierr.base.support.coroutine.ktx.showToast
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
 import com.senierr.base.util.ScreenUtil

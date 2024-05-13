@@ -10,7 +10,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.senierr.adapter.internal.MultiTypeAdapter
-import com.senierr.base.support.arch.viewmodel.state.UIState
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.CoroutineCompat
 import com.senierr.base.support.ui.BaseBottomDialogFragment
 import com.senierr.base.util.LogUtil
 import com.senierr.base.util.ScreenUtil
@@ -34,6 +35,8 @@ import kotlinx.coroutines.isActive
 class PlayingListDialog(
     private val onItemSelectedListener: (position: Int, item: LocalAudio) -> Unit
 ) : BaseBottomDialogFragment<DialogPlayingListBinding>() {
+
+    private val coroutineCompat = CoroutineCompat(lifecycleScope)
 
     private val multiTypeAdapter = MultiTypeAdapter()
     private val playingListWrapper = PlayingListWrapper()
@@ -81,7 +84,7 @@ class PlayingListDialog(
         LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
         when (state) {
             is UIState.Content -> {
-                lifecycleScope.launchSingle("notifyLocalFilesChanged") {
+                coroutineCompat.launchSingle("notifyLocalFilesChanged") {
                     val oldList = multiTypeAdapter.data.filterIsInstance<LocalAudio>()
                     val newList = state.value
                     val diffResult = DiffUtils.diffLocalFile(oldList, newList)

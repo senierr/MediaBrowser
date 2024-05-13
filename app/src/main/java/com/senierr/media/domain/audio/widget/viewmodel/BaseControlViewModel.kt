@@ -13,13 +13,14 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
-import com.senierr.base.support.arch.viewmodel.BaseViewModel
+import com.senierr.base.support.arch.BaseViewModel
+import com.senierr.base.support.coroutine.CoroutineCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -36,6 +37,8 @@ abstract class BaseControlViewModel : BaseViewModel() {
     }
 
     data class Progress(val position: Long, val duration: Long)
+
+    private val coroutineCompat = CoroutineCompat(viewModelScope)
 
     // 播放项
     private val _playingItem = MutableStateFlow<MediaMetadataCompat?>(null)
@@ -135,7 +138,7 @@ abstract class BaseControlViewModel : BaseViewModel() {
      */
     private fun tryConnect() {
         Log.d(TAG, "tryConnect: $tryConnectCount")
-        viewModelScope.launchSingle("tryConnect") {
+        coroutineCompat.launchSingle("tryConnect") {
             runCatching {
                 delay(INTERNAL_TRY_CONNECT * tryConnectCount)
                 tryConnectCount++

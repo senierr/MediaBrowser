@@ -8,9 +8,10 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.senierr.base.support.arch.viewmodel.BaseViewModel
-import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.runCatchSilent
+import com.senierr.base.support.arch.BaseViewModel
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.CoroutineCompat
+import com.senierr.base.support.coroutine.ktx.runCatchSilent
 import com.senierr.base.util.LogUtil
 import com.senierr.media.SessionApplication
 import com.senierr.media.repository.MediaRepository
@@ -27,6 +28,8 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class ImageViewModel : BaseViewModel() {
 
+    private val coroutineCompat = CoroutineCompat(viewModelScope)
+    
     // 当前目录
     private val _currentFolder = MutableStateFlow<String>(Environment.getExternalStorageDirectory().path)
     val currentFolder = _currentFolder.asStateFlow()
@@ -68,7 +71,7 @@ class ImageViewModel : BaseViewModel() {
      * 拉取媒体数据（文件夹 + 数据）
      */
     fun fetchLocalFiles(bucketPath: String) {
-        viewModelScope.launchSingle("fetchLocalFiles") {
+        coroutineCompat.launchSingle("fetchLocalFiles") {
             LogUtil.logD(TAG, "fetchLocalFiles: $bucketPath")
             if (bucketPath.isBlank()) return@launchSingle
             runCatchSilent({

@@ -1,4 +1,4 @@
-package com.senierr.base.support.ktx
+package com.senierr.base.support.coroutine.ktx
 
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod

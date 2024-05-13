@@ -4,8 +4,9 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.runCatchSilent
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.CoroutineCompat
+import com.senierr.base.support.coroutine.ktx.runCatchSilent
 import com.senierr.base.util.LogUtil
 import com.senierr.media.domain.common.BaseControlViewModel
 import com.senierr.media.repository.MediaRepository
@@ -33,6 +34,8 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
         FORCE_PLAY  // 强制播放
     }
 
+    private val coroutineCompat = CoroutineCompat(viewModelScope)
+    
     // 当前目录下数据
     private val _localAudios = MutableStateFlow<UIState<List<LocalAudio>>>(UIState.Empty)
     val localAudios = _localAudios.asStateFlow()
@@ -76,7 +79,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
         }.launchIn(viewModelScope)
         playError.onEach {
             if (hasNextItem()) {
-                viewModelScope.launchSingle("autoSkipToNext") {
+                coroutineCompat.launchSingle("autoSkipToNext") {
                     delay(500)
                     skipToNext()
                 }
@@ -88,7 +91,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
      * 数据恢复
      */
     fun restore() {
-        viewModelScope.launchSingle("restore") {
+        coroutineCompat.launchSingle("restore") {
             runCatchSilent({
                 LogUtil.logD(TAG, "restore")
                 // 播放会话
@@ -106,7 +109,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
      * 自动播放
      */
     fun autoPlay() {
-        viewModelScope.launchSingle("autoPlay") {
+        coroutineCompat.launchSingle("autoPlay") {
             runCatchSilent({
                 LogUtil.logD(TAG, "autoPlay")
                 // 播放会话
@@ -132,7 +135,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
      * 启动
      */
     private fun setup(bucketPath: String, localAudio: LocalAudio? = null, playType: PlayType = PlayType.AUTO_PLAY) {
-        viewModelScope.launchSingle("setup") {
+        coroutineCompat.launchSingle("setup") {
             runCatchSilent({
                 LogUtil.logD(TAG, "setup: $bucketPath, $localAudio, $playType")
                 if (bucketPath.isBlank()) return@runCatchSilent
@@ -201,7 +204,7 @@ class AudioControlViewModel : BaseControlViewModel<LocalAudio>() {
      * 保存播放会话
      */
     private fun savePlaySession(enableLog: Boolean = true) {
-        viewModelScope.launchSingle("savePlaySession") {
+        coroutineCompat.launchSingle("savePlaySession") {
             runCatchSilent({
                 if (currentPlaySession.bucketPath.isBlank() || currentPlaySession.path.isBlank()) {
                     return@runCatchSilent

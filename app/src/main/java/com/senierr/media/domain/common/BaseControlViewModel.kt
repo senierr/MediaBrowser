@@ -16,7 +16,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.DefaultExtractorsFactory
-import com.senierr.base.support.arch.viewmodel.BaseViewModel
+import com.senierr.base.support.arch.BaseViewModel
+import com.senierr.base.support.coroutine.CoroutineCompat
 import com.senierr.base.util.LogUtil
 import com.senierr.media.SessionApplication
 import kotlinx.coroutines.cancel
@@ -44,6 +45,8 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
         object SHUFFLE : PlayMode
     }
 
+    private val coroutineCompat = CoroutineCompat(viewModelScope)
+    
     // 当前播放音频
     private val _playingItem = MutableStateFlow<T?>(null)
     val playingItem = _playingItem.asStateFlow()
@@ -117,7 +120,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
         mediaController.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 LogUtil.logD(TAG, "onMediaItemTransition: ${mediaItem?.mediaId} - ${mediaItem?.mediaMetadata?.title}, $reason")
-                viewModelScope.launchSingle("onMediaItemTransition") {
+                coroutineCompat.launchSingle("onMediaItemTransition") {
                     val item = playingList.value.find { onItemCovertToMediaItem(it).mediaId == mediaItem?.mediaId }
                     _playingItem.emit(item)
                 }
@@ -126,7 +129,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 LogUtil.logD(TAG, "onPlaybackStateChanged: $playbackState")
                 if (playbackState == Player.STATE_READY) {
-                    viewModelScope.launchSingle("initProgress") {
+                    coroutineCompat.launchSingle("initProgress") {
                         var position = mediaController.currentPosition
                         var duration = mediaController.duration
                         if (duration <= 0) {
@@ -155,7 +158,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
                     mediaController.playWhenReady = true
                     mediaController.prepare()
                 } else {
-                    viewModelScope.launchSingle("onPlayerError") {
+                    coroutineCompat.launchSingle("onPlayerError") {
                         _playError.emit(error)
                     }
                 }
@@ -167,7 +170,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
      * 启动进度监听
      */
     private fun setupProgressListener() {
-        viewModelScope.launchSingle("setupProgressListener") {
+        coroutineCompat.launchSingle("setupProgressListener") {
             while (isActive) {
                 var position = mediaController.currentPosition
                 var duration = mediaController.duration
@@ -195,7 +198,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
      */
     open fun setMediaItems(items: List<T>, startIndex: Int = -1, startPositionMs: Long = -1) {
         LogUtil.logD(TAG, "setMediaItems: ${items.size}, $startIndex, $startPositionMs")
-        viewModelScope.launchSingle("setMediaItems") {
+        coroutineCompat.launchSingle("setMediaItems") {
             _playingList.emit(items)
         }
         val newMediaItems = items.map { onItemCovertToMediaItem(it) }

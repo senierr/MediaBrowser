@@ -11,9 +11,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.senierr.adapter.internal.MultiTypeAdapter
-import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.onThrottleClick
-import com.senierr.base.support.ktx.setGone
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.CoroutineCompat
+import com.senierr.base.support.coroutine.ktx.onThrottleClick
+import com.senierr.base.support.coroutine.ktx.setGone
 import com.senierr.base.support.ui.BaseFragment
 import com.senierr.base.support.ui.recyclerview.GridItemDecoration
 import com.senierr.base.util.LogUtil
@@ -48,6 +49,7 @@ class AudioHomeFragment : BaseFragment<FragmentHomeAudioBinding>() {
     private val folderWrapper = FolderWrapper()
     private val audioWrapper = AudioWrapper()
 
+    private val coroutineCompat = CoroutineCompat(lifecycleScope)
     private val audioViewModel by applicationViewModel<AudioViewModel>()
 
     override fun createViewBinding(inflater: LayoutInflater, container: ViewGroup?): FragmentHomeAudioBinding {
@@ -164,7 +166,7 @@ class AudioHomeFragment : BaseFragment<FragmentHomeAudioBinding>() {
             }
             is UIState.Content -> {
                 binding?.msvState?.showContentView()
-                lifecycleScope.launchSingle("notifyLocalFilesChanged") {
+                coroutineCompat.launchSingle("notifyLocalFilesChanged") {
                     val oldList = multiTypeAdapter.data.filterIsInstance<LocalFile>()
                     val diffResult = DiffUtils.diffLocalFile(oldList, state.value)
                     if (isActive) {

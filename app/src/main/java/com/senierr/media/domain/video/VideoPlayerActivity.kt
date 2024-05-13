@@ -10,11 +10,12 @@ import android.widget.SeekBar
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.senierr.adapter.internal.MultiTypeAdapter
-import com.senierr.base.support.arch.viewmodel.state.UIState
-import com.senierr.base.support.ktx.onThrottleClick
-import com.senierr.base.support.ktx.setGone
-import com.senierr.base.support.ktx.showToast
-import com.senierr.base.support.ktx.viewModel
+import com.senierr.base.support.arch.UIState
+import com.senierr.base.support.coroutine.CoroutineCompat
+import com.senierr.base.support.coroutine.ktx.onThrottleClick
+import com.senierr.base.support.coroutine.ktx.setGone
+import com.senierr.base.support.coroutine.ktx.showToast
+import com.senierr.base.support.coroutine.ktx.viewModel
 import com.senierr.base.support.ui.BaseActivity
 import com.senierr.base.util.LogUtil
 import com.senierr.media.R
@@ -57,6 +58,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
     private val multiTypeAdapter = MultiTypeAdapter()
     private val playingListWrapper = PlayingListWrapper(this)
 
+    private val coroutineCompat = CoroutineCompat(lifecycleScope)
     private val controlViewModel: VideoControlViewModel by viewModel()
 
     // 进度条是否处于拖动状态
@@ -205,7 +207,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
         LogUtil.logD(TAG, "notifyLocalFilesChanged: $state")
         when (state) {
             is UIState.Content -> {
-                lifecycleScope.launchSingle("notifyLocalFilesChanged") {
+                coroutineCompat.launchSingle("notifyLocalFilesChanged") {
                     val oldList = multiTypeAdapter.data.filterIsInstance<LocalAudio>()
                     val newList = state.value
                     val diffResult = DiffUtils.diffLocalFile(oldList, newList)
@@ -281,7 +283,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>() {
      */
     private fun hideControlBar(delayTimes: Long = 0) {
         LogUtil.logD(TAG, "hideControlBar: $delayTimes")
-        lifecycleScope.launchSingle("hideControlBar") {
+        coroutineCompat.launchSingle("hideControlBar") {
             if (delayTimes > 0L) {
                 delay(delayTimes)
             }
