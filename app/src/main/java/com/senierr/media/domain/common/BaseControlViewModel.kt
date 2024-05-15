@@ -46,7 +46,7 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     }
 
     private val coroutineCompat = CoroutineCompat(viewModelScope)
-    
+
     // 当前播放音频
     private val _playingItem = MutableStateFlow<T?>(null)
     val playingItem = _playingItem.asStateFlow()
@@ -106,7 +106,8 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     /**
      * 初始化
      */
-    @OptIn(UnstableApi::class) open fun initialize() {
+    @OptIn(UnstableApi::class)
+    open fun initialize() {
         val context = SessionApplication.getInstance()
         // 初始化音频焦点
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager?
@@ -123,32 +124,21 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
                 coroutineCompat.launchSingle("onMediaItemTransition") {
                     val item = playingList.value.find { onItemCovertToMediaItem(it).mediaId == mediaItem?.mediaId }
                     _playingItem.emit(item)
+                    // 切换歌曲后，重置播放进度
+                    postProgress()
                 }
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 LogUtil.logD(TAG, "onPlaybackStateChanged: $playbackState")
-                if (playbackState == Player.STATE_READY) {
-                    coroutineCompat.launchSingle("initProgress") {
-                        var position = mediaController.currentPosition
-                        var duration = mediaController.duration
-                        if (duration <= 0) {
-                            position = 0
-                            duration = 0
-                        } else {
-                            if (position > duration) {
-                                position = duration
-                            }
-                        }
-                        _progress.emit(Progress(position, duration))
-                    }
-                }
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 LogUtil.logD(TAG, "onIsPlayingChanged: $isPlaying")
                 _playStatus.tryEmit(isPlaying)
-                if (isPlaying) { setupProgressListener() }
+                if (isPlaying) {
+                    setupProgressListener()
+                }
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -172,25 +162,32 @@ abstract class BaseControlViewModel<T> : BaseViewModel() {
     private fun setupProgressListener() {
         coroutineCompat.launchSingle("setupProgressListener") {
             while (isActive) {
-                var position = mediaController.currentPosition
-                var duration = mediaController.duration
-                if (duration <= 0) {
-                    position = 0
-                    duration = 0
-                } else {
-                    if (position > duration) {
-                        position = duration
-                    }
-                }
-                _progress.emit(Progress(position, duration))
+                postProgress()
                 // 延迟刷新
                 if (mediaController.isPlaying) {
-                    delay(800)
+                    delay(500)
                 } else {
                     cancel()
                 }
             }
         }
+    }
+
+    /**
+     * 发送进度
+     */
+    private suspend fun postProgress() {
+        var position = mediaController.currentPosition
+        var duration = mediaController.duration
+        if (duration <= 0) {
+            position = 0
+            duration = 0
+        } else {
+            if (position > duration) {
+                position = duration
+            }
+        }
+        _progress.emit(Progress(position, duration))
     }
 
     /**
