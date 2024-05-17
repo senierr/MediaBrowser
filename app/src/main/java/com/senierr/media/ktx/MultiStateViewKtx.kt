@@ -1,6 +1,6 @@
 package com.senierr.media.ktx
 
-import com.senierr.base.widget.MultiStateView
+import com.senierr.widget.MultiStateView
 
 /**
  * 多状态布局扩展函数

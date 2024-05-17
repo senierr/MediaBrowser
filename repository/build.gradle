@@ -32,7 +32,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation project(path: ':base:util')
+    implementation libs.androidutils
     implementation libs.androidx.appcompat
     implementation libs.material
     implementation libs.kotlin.stdlib

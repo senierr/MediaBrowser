@@ -9,7 +9,7 @@
         android:id="@+id/layout_top_bar"
         layout="@layout/layout_top_bar"/>
 
-    <com.senierr.base.widget.MultiStateView
+    <com.senierr.widget.MultiStateView
         android:id="@+id/msv_state"
         app:msv_loadingView="@layout/layout_status_loading"
         app:msv_emptyView="@layout/layout_status_usb_empty"
@@ -21,5 +21,5 @@
             android:id="@+id/rv_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
-    </com.senierr.base.widget.MultiStateView>
+    </com.senierr.widget.MultiStateView>
 </LinearLayout>

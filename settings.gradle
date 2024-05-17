@@ -28,7 +28,4 @@ dependencyResolutionManagement {
 rootProject.name = "MediaBrowser"
 include ':app'
 include ':repository'
-include ':base:util'
-include ':base:support'
-include ':base:widget'
 

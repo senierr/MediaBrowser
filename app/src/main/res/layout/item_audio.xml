@@ -25,7 +25,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <com.senierr.base.widget.PlayingIcon
+    <com.senierr.media.widget.PlayingIcon
         android:id="@+id/iv_playing_icon"
         app:pointerColor="@color/white"
         app:pointerWidth="@dimen/dp_3"

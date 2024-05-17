@@ -1,4 +1,4 @@
-package com.senierr.base.widget
+package com.senierr.media.widget
 
 import android.content.Context
 import android.content.res.TypedArray
@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
 import android.view.View
+import com.senierr.media.R
 import java.lang.ref.WeakReference
 import java.util.Random
 
